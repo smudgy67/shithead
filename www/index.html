@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17202b">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Shithead</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;700&display=swap">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<style>
+/* Layout: one tall card table. Opponents along the top rail, deck and pile in the middle, your seat at the bottom. Deliberately single-theme (a lit table at night). */
+:root{
+  --table:#17202b; --table-2:#223044; --rail:#334258; --ink:#eef1f5; --muted:#9aa8bb;
+  --card:#fbfaf6; --card-ink:#1b1e25; --red:#c42e3b;
+  --accent:#f2b134; --joker:#5a45c2; --accent-2:#d98f12; --accent-ink:#2a1b00; --good:#62c98f; --bad:#ff7a6b;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cw:clamp(46px,13vw,74px);
+  color-scheme:dark;
+}
+html,body{height:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation;background:var(--table);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;background:radial-gradient(120% 80% at 50% 45%,var(--table-2),var(--table) 70%) fixed var(--table)}
+#app{max-width:980px;margin:0 auto;padding-block:12px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--display);font-weight:800;font-size:22px;display:flex;align-items:center;gap:8px}
+.brand .mark{display:inline-block;width:16px;height:22px;border-radius:3px;background:var(--accent);box-shadow:inset 0 0 0 2px var(--card),inset 0 0 0 4px var(--accent-ink);transform:rotate(-8deg)}
+
+/* buttons */
+.btn{font-family:var(--display);font-weight:700;font-size:15px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:10px 20px;cursor:pointer;transition:transform .12s,background .12s}
+.btn:hover:not(:disabled){background:#ffc451}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--rail)}
+.btn.ghost:hover:not(:disabled){background:rgba(255,255,255,.06)}
+.btn.sm{padding:6px 14px;font-size:13px}
+.btn.warn{background:var(--bad);color:#2b0703}
+
+/* cards */
+.card{width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.11);background:var(--card);color:var(--card-ink);position:relative;border:0;padding:0;font-family:var(--display);box-shadow:0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28);flex:none;display:block;transition:transform .15s,box-shadow .15s,filter .15s;cursor:default;user-select:none}
+.card.red{color:var(--red)}
+.card.joker{color:var(--joker);background:linear-gradient(160deg,var(--card) 55%,#ece7fb)}
+.card.joker .ix{font-size:calc(var(--cw)*.13);line-height:1.02;top:8%}
+.card.joker .pip{font-size:calc(var(--cw)*.62)}
+.card .ix{position:absolute;top:7%;left:10%;font-weight:800;font-size:calc(var(--cw)*.29);line-height:.92;display:flex;flex-direction:column;align-items:center}
+.card .ix i{font-style:normal;font-size:.72em}
+.card .pip{position:absolute;right:9%;bottom:5%;font-size:calc(var(--cw)*.5);line-height:1}
+.card.special::after{content:"";position:absolute;inset:3px;border-radius:calc(var(--cw)*.09);box-shadow:inset 0 0 0 1.5px currentColor;opacity:.22;pointer-events:none}
+.card.back{background:repeating-linear-gradient(135deg,var(--accent) 0 5px,var(--accent-2) 5px 7px);box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 5px var(--accent-ink),0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28)}
+.card.back::before{content:"S";position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:calc(var(--cw)*.42);color:var(--accent-ink);opacity:.8}
+.card.ok{cursor:pointer}
+.card.ok:hover{transform:translateY(-5px)}
+.card.sel{transform:translateY(-14px)!important;box-shadow:0 0 0 3px var(--accent),0 10px 18px rgba(0,0,0,.4)}
+.card.dim{filter:brightness(.55) saturate(.5)}
+.card.swapsel{box-shadow:0 0 0 3px var(--good),0 10px 18px rgba(0,0,0,.4);transform:translateY(-8px)}
+.card.nudge{animation:nudge .3s}
+@keyframes nudge{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.placeholder{width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.11);box-shadow:inset 0 0 0 1.5px var(--rail);flex:none}
+
+/* table slots: face-up card sits over its face-down card */
+.slots{display:flex;gap:calc(var(--cw)*.16)}
+.slot{position:relative;width:var(--cw);height:calc(var(--cw)*1.4 + var(--cw)*.22)}
+.slot>*{position:absolute;left:0}
+.slot>.d{top:0}
+.slot>.u{top:calc(var(--cw)*.22)}
+
+/* opponents */
+.opps{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.opp{--cw:clamp(30px,8.4vw,42px);background:rgba(255,255,255,.035);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);transition:box-shadow .2s}
+.opp.active{box-shadow:inset 0 0 0 2px var(--accent)}
+.opp-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.opp-head h3{font-size:16px}
+.opp-body{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.fan{display:flex;align-items:center}
+.fan .card{margin-left:calc(var(--cw)*-.62)}
+.fan .card:first-child{margin-left:0}
+.count{font-family:var(--display);font-weight:700;font-size:13px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.chip{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.07);color:var(--muted);white-space:nowrap}
+.chip.turn{background:var(--accent);color:var(--accent-ink)}
+.chip.out{background:rgba(98,201,143,.16);color:var(--good)}
+.chip.cpu{background:transparent;box-shadow:inset 0 0 0 1px var(--rail)}
+
+/* centre */
+.centre{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:14px 4px}
+.stack{--cw:clamp(50px,13vw,74px);display:flex;flex-direction:column;align-items:center;gap:6px}
+.deckpile{position:relative}
+.deckpile .card:nth-child(2){position:absolute;top:-3px;left:-3px}
+.pilewrap{--cw:clamp(60px,17vw,96px);display:flex;flex-direction:column;align-items:center;gap:8px}
+.pile{position:relative;width:calc(var(--cw)*1.9);height:calc(var(--cw)*1.4 + 10px);display:grid;place-items:center}
+.pile .card{position:absolute}
+.pile.burn{animation:burn .7s ease-out}
+@keyframes burn{0%{filter:none}30%{filter:drop-shadow(0 0 22px var(--accent)) brightness(1.4)}100%{filter:none}}
+.need{font-family:var(--display);font-weight:700;font-size:16px;text-align:center}
+.need small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
+.flash{font-family:var(--display);font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.14em;text-transform:uppercase;min-height:1.2em}
+
+.log{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted);min-height:3.6em;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);padding:8px 2px}
+.log div:last-child{color:var(--ink)}
+
+/* your seat */
+.me{display:flex;flex-direction:column;gap:12px;background:rgba(0,0,0,.18);border-radius:20px;padding:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.me.active{box-shadow:inset 0 0 0 2px var(--accent)}
+.me-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.me-head h2{font-size:20px}
+.prompt{font-weight:600}
+.me-row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.zone{display:flex;flex-direction:column;gap:6px;min-width:0}
+.hand{display:flex;flex-wrap:wrap;gap:6px;padding-top:16px;min-height:calc(var(--cw)*1.4 + 16px)}
+.hand.tight{gap:0}
+.hand.tight .card{margin-right:calc(var(--cw)*-.3)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* setup */
+.setup{max-width:560px;margin:4vh auto 0;display:flex;flex-direction:column;gap:22px;width:100%}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero h1{font-size:clamp(44px,12vw,76px);font-weight:800;line-height:.9}
+.hero p{margin:0;color:var(--muted);max-width:46ch;line-height:1.5}
+.hero-cards{--cw:44px;display:flex;gap:0;margin-bottom:6px}
+.hero-cards .card{margin-right:-14px}
+.hero-cards .card:nth-child(1){transform:rotate(-12deg) translateY(6px)}
+.hero-cards .card:nth-child(2){transform:rotate(-4deg)}
+.hero-cards .card:nth-child(3){transform:rotate(5deg)}
+.hero-cards .card:nth-child(4){transform:rotate(13deg) translateY(6px)}
+.panel{background:rgba(255,255,255,.04);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.seg{display:inline-flex;background:rgba(0,0,0,.25);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:7px 16px;font-family:var(--display);font-weight:700;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seat{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.seat .num{font-family:var(--display);font-weight:800;color:var(--muted);width:1.2em}
+.seat input{min-width:0;background:rgba(0,0,0,.25);border:1px solid var(--rail);border-radius:10px;padding:9px 11px;color:var(--ink);font:inherit}
+.note{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.note.warn{color:var(--bad)}
+.joinrow{display:flex;gap:8px;flex-wrap:wrap}
+.panel input.text{min-width:0;flex:1;background:rgba(0,0,0,.25);border:1px solid var(--rail);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit}
+#ocode{letter-spacing:.3em;font-family:var(--display);font-weight:800;text-transform:uppercase;max-width:9em}
+.bigcode{font-family:var(--display);font-weight:800;font-size:clamp(48px,16vw,72px);letter-spacing:.12em;color:var(--accent);line-height:1}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.plist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
+.toggle{display:flex;gap:10px;align-items:flex-start;cursor:pointer;line-height:1.4}
+.toggle input{accent-color:var(--accent);width:18px;height:18px;margin-top:2px;flex:none}
+.toggle small{color:var(--muted);display:block}
+
+/* overlays */
+.cover{position:fixed;inset:0;background:rgba(10,14,20,.86);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:20;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.cover-box{background:var(--table-2);border-radius:22px;padding:26px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07)}
+.cover-box h2{font-size:28px}
+.cover-box p{margin:0;color:var(--muted);line-height:1.5}
+.ranks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ranks li{display:flex;gap:12px;align-items:center;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.04);font-variant-numeric:tabular-nums}
+.ranks li b{font-family:var(--display);width:2.2em;color:var(--muted)}
+.ranks li.loser{background:rgba(255,122,107,.14);color:var(--bad);font-weight:700}
+details.rules{color:var(--muted);font-size:14px;line-height:1.55}
+details.rules summary{cursor:pointer;font-weight:700;color:var(--ink)}
+details.rules ul{padding-left:1.2em;margin:8px 0 0;max-width:65ch}
+
+@media (max-width:520px){
+  .centre{grid-template-columns:auto 1fr;gap:10px}
+  .centre .need-col{grid-column:1/-1;order:3}
+  .me{padding:12px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const SUITS=['♠','♥','♦','♣'];
+const NAMES={11:'J',12:'Q',13:'K',14:'A',15:'★'};
+const JOKER=15;
+const rn=r=>NAMES[r]||String(r);
+const isRed=s=>s==='♥'||s==='♦';
+const CPU_NAMES=['Rosa','Dev','Mags'];
+let DELAY=900;
+
+let S=null;                 // game state
+let sel={zone:null,idx:[]}; // current selection
+let pass=null;              // {pi, why} hand-over cover for pass-and-play
+let timer=null;
+let nudgeId=null;
+let seenBurn=0;
+let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'Rosa',type:'cpu'},{name:'Dev',type:'cpu'},{name:'Mags',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
+for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
+
+function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));return x&&x.seats&&x.seats.length===4?x:null}catch(e){return null}}
+function saveSetup(){try{localStorage.setItem('shithead-setup',JSON.stringify(setup))}catch(e){}}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const sortHand=p=>p.hand.sort((a,b)=>a.r-b.r||a.s.localeCompare(b.s));
+const humans=()=>S.players.map((p,i)=>p.type==='human'?i:-1).filter(i=>i>=0);
+const multiHuman=()=>humans().length>1;
+const zoneOf=p=>p.hand.length?'hand':p.up.length?'up':p.down.length?'down':null;
+const invisible=r=>r===JOKER||(S.eights&&r===8);
+function topRank(){for(let i=S.pile.length-1;i>=0;i--){const r=S.pile[i].r;if(!invisible(r))return r}return null}
+function canPlay(r){
+  const t=topRank();
+  if(S.jacks&&t===11)return r>=11;
+  if(r===2||r===10||invisible(r))return true;
+  if(t===null)return true;
+  if(S.seven&&t===7)return r<=7;
+  return r>=t;
+}
+function hasMove(p){const z=zoneOf(p);if(!z)return false;if(z==='down')return true;return p[z].some(c=>canPlay(c.r))}
+function cardName(c){return c.r===JOKER?'a joker':rn(c.r)+c.s}
+function describe(cards){const r=cards[0].r;return cards.length===1?cardName(cards[0]):`${cards.length} × ${r===JOKER?'jokers':rn(r)}`}
+function log(t){S.log.push(t);if(S.log.length>40)S.log.shift()}
+function cardValue(c){return c.r===JOKER?18:c.r===10?17:c.r===2?16:invisible(c.r)?15:c.r}
+const wild=r=>r===2||r===10||invisible(r);
+
+/* ---------- game flow ---------- */
+function buildGame(seats,rules){
+  clearTimeout(timer);timer=null;
+  const deck=[];let id=0;
+  for(const s of SUITS)for(let r=2;r<=14;r++)deck.push({r,s,id:id++});
+  if(rules.jokers){deck.push({r:JOKER,s:'★',id:id++},{r:JOKER,s:'★',id:id++})}
+  shuffle(deck);
+  S={players:seats.map((x,i)=>({name:(x.name||'').trim()||(x.type==='cpu'?CPU_NAMES[i-1]||'Computer':`Player ${i+1}`),type:x.type,uid:x.uid||null,hand:[],up:[],down:[],out:false})),
+     deck,pile:[],burned:0,turn:0,phase:'swap',seven:rules.seven,eights:rules.eights,jacks:rules.jacks,jokers:rules.jokers,dir:1,finish:[],log:[],viewer:0,swapQ:[],flash:null,shithead:null,burnSeq:0,round:1,rev:0};
+  for(const k of ['down','up','hand'])for(let i=0;i<3;i++)for(const p of S.players)p[k].push(deck.pop());
+  S.players.forEach(p=>{if(p.type==='cpu')aiSwap(p);sortHand(p)});
+}
+function newGame(){
+  buildGame(setup.seats.slice(0,setup.count),setup);
+  S.swapQ=humans();
+  S.viewer=S.swapQ[0]??0;
+  sel={zone:null,idx:[]};
+  pass=multiHuman()?{pi:S.viewer,why:'swap'}:null;
+  log('Cards dealt. Swap hand and face-up cards, then start.');
+  render();
+}
+
+function aiSwap(p){
+  const all=[...p.hand,...p.up].sort((a,b)=>cardValue(b)-cardValue(a));
+  p.up=all.slice(0,3);p.hand=all.slice(3);
+}
+
+function finishSwap(){
+  S.swapQ.shift();
+  sel={zone:null,idx:[]};
+  if(S.swapQ.length){S.viewer=S.swapQ[0];pass={pi:S.viewer,why:'swap'};render();return}
+  startPlay();
+}
+
+function startPlay(){
+  S.phase='play';
+  let best=null,bi=0;
+  S.players.forEach((p,i)=>p.hand.forEach(c=>{if(!wild(c.r)&&(best===null||c.r<best)){best=c.r;bi=i}}));
+  S.turn=bi;
+  const fp=S.players[bi];
+  log(`${fp.name} ${youVerb(fp,'have','has')} the lowest card${best?` (${rn(best)})`:''} and ${youVerb(fp,'go','goes')} first.`);
+  beginTurn();
+}
+
+function beginTurn(){
+  const p=S.players[S.turn];
+  sel={zone:null,idx:[]};
+  if(ON){render();push();return}
+  if(p.type==='cpu'){render();timer=setTimeout(aiMove,DELAY);return}
+  if(S.viewer!==S.turn){S.viewer=S.turn;if(multiHuman())pass={pi:S.turn,why:'turn'}}
+  render();
+}
+
+function advance(){
+  const n=S.players.length;
+  const d=S.dir||1;
+  do{S.turn=(S.turn+d+n)%n}while(S.players[S.turn].out);
+  beginTurn();
+}
+
+function doPlay(pi,zone,idxs){
+  const p=S.players[pi];
+  const cards=[...idxs].sort((a,b)=>b-a).map(i=>p[zone].splice(i,1)[0]);
+  S.pile.push(...cards);
+  log(`${p.name} played ${describe(cards)}${zone==='up'?' from the table':''}.`);
+  afterPlay(pi,cards);
+}
+
+function afterPlay(pi,cards){
+  const p=S.players[pi];
+  let burn=null;
+  if(cards[0].r===10)burn='A 10 burns the pile.';
+  else{const n=S.pile.length;if(n>=4){const r=S.pile[n-1].r;if(S.pile.slice(-4).every(c=>c.r===r))burn=`Four ${rn(r)}s in a row burn the pile.`}}
+  while(S.deck.length&&p.hand.length<3)p.hand.push(S.deck.pop());
+  sortHand(p);
+  if(burn){S.burned+=S.pile.length;S.pile=[];S.flash='burn';S.burnSeq=(S.burnSeq||0)+1;log(burn+(p.out?'':` ${p.name} ${youVerb(p,'go','goes')} again.`))}
+  else if(cards[0].r===2){log('A 2 resets the pile.')}
+  else if(cards[0].r===JOKER){
+    const active=S.players.filter(x=>!x.out).length;
+    if(active>2&&cards.length%2===1){S.dir=-(S.dir||1);log('The joker reverses the direction of play.')}
+    else log('The joker is invisible.')
+  }
+  else if(cards[0].r===8&&S.eights){log('The 8 is invisible.')}
+  checkOut(pi);
+  if(endCheck())return;
+  if(burn&&!p.out)beginTurn();else advance();
+}
+function youVerb(p,a,b){return p.name==='You'?a:b}
+
+function checkOut(pi){
+  const p=S.players[pi];
+  if(!p.out&&!p.hand.length&&!p.up.length&&!p.down.length&&!S.deck.length){
+    p.out=true;S.finish.push(pi);
+    log(`${p.name} ${youVerb(p,'are','is')} out in place ${S.finish.length}.`);
+  }
+}
+function endCheck(){
+  const left=S.players.map((p,i)=>p.out?-1:i).filter(i=>i>=0);
+  if(left.length<=1){
+    S.phase='over';S.shithead=left[0]??null;pass=null;
+    if(left.length)log(`${S.players[left[0]].name} ${youVerb(S.players[left[0]],'are','is')} the shithead.`);
+    render();if(ON)push();return true;
+  }
+  return false;
+}
+
+function pickUp(pi){
+  const p=S.players[pi];const n=S.pile.length;
+  p.hand.push(...S.pile);S.pile=[];sortHand(p);
+  log(`${p.name} ${youVerb(p,'pick','picks')} up the pile (${n} card${n===1?'':'s'}).`);
+  advance();
+}
+
+function flip(pi,idx){
+  const p=S.players[pi];
+  const c=p.down.splice(idx,1)[0];
+  if(canPlay(c.r)){
+    S.pile.push(c);log(`${p.name} flipped ${cardName(c)} blind and it plays.`);afterPlay(pi,[c]);
+  }else{
+    S.pile.push(c);const n=S.pile.length;
+    p.hand.push(...S.pile);S.pile=[];sortHand(p);
+    log(`${p.name} flipped ${cardName(c)} blind. It can't go, so ${youVerb(p,'you pick','they pick')} up ${n} cards.`);
+    advance();
+  }
+}
+
+/* ---------- computer player ---------- */
+function aiMove(){
+  if(!S||S.phase!=='play')return;
+  const pi=S.turn,p=S.players[pi];
+  if(p.type!=='cpu')return;
+  const z=zoneOf(p);
+  if(z==='down'){flip(pi,Math.floor(Math.random()*p.down.length));return}
+  const cards=p[z];
+  const ranks=[...new Set(cards.filter(c=>canPlay(c.r)).map(c=>c.r))];
+  if(!ranks.length){pickUp(pi);return}
+  const normal=ranks.filter(r=>!wild(r)).sort((a,b)=>a-b);
+  let r;
+  if(normal.length&&!(S.pile.length>=6&&ranks.includes(10)&&normal[0]>=11))r=normal[0];
+  else if(ranks.includes(10)&&(S.pile.length>=4||ranks.length===1))r=10;
+  else r=[2,8,JOKER,10].find(x=>ranks.includes(x));
+  const idx=cards.map((c,i)=>c.r===r?i:-1).filter(i=>i>=0);
+  doPlay(pi,z,idx);
+}
+
+/* ---------- human input ---------- */
+function onCard(zone,i){
+  if(pass||!S)return;
+  const p=S.players[S.viewer];
+  if(S.phase==='swap'){
+    if(zone!=='hand'&&zone!=='up')return;
+    if(ON&&ON.readyRound===S.round)return;
+    if(sel.zone&&sel.zone!==zone){
+      const hi=zone==='hand'?i:sel.idx[0],ui=zone==='up'?i:sel.idx[0];
+      [p.hand[hi],p.up[ui]]=[p.up[ui],p.hand[hi]];sortHand(p);sel={zone:null,idx:[]};
+    }else if(sel.zone===zone&&sel.idx[0]===i){sel={zone:null,idx:[]}}
+    else sel={zone,idx:[i]};
+    render();return;
+  }
+  if(S.phase!=='play'||S.turn!==S.viewer||p.type!=='human')return;
+  const z=zoneOf(p);
+  if(zone!==z){nudge(zone,i);return}
+  if(z==='down'){flip(S.viewer,i);return}
+  const c=p[z][i];
+  if(!canPlay(c.r)){nudge(zone,i);return}
+  if(sel.zone===z&&sel.idx.length&&p[z][sel.idx[0]].r===c.r){
+    sel.idx=sel.idx.includes(i)?sel.idx.filter(x=>x!==i):[...sel.idx,i];
+    if(!sel.idx.length)sel.zone=null;
+  }else{
+    sel={zone:z,idx:p[z].map((x,j)=>x.r===c.r?j:-1).filter(j=>j>=0)};
+  }
+  render();
+}
+function nudge(zone,i){nudgeId=zone+':'+i;render();nudgeId=null}
+
+function act(a,el){
+  if(a==='players'){setup.count=+el.dataset.n;saveSetup();render();return}
+  if(a==='seat-type'){const k=+el.dataset.k;const s=setup.seats[k];s.type=s.type==='cpu'?'human':'cpu';if(s.type==='cpu'&&(!s.name||/^Player \d$/.test(s.name)))s.name=CPU_NAMES[k-1];if(s.type==='human'&&CPU_NAMES.includes(s.name))s.name=`Player ${k+1}`;saveSetup();render();return}
+  if(a==='mode'&&el.dataset.m==='online'){setup.online=true;saveSetup();render();return}
+  if(a==='mode'){setup.online=false;const h=el.dataset.m==='people';for(let k=1;k<4;k++){const st=setup.seats[k];st.type=h?'human':'cpu';st.name=h?`Player ${k+1}`:CPU_NAMES[k-1]}if(h&&setup.seats[0].name==='You')setup.seats[0].name='Player 1';if(!h&&setup.seats[0].name==='Player 1')setup.seats[0].name='You';saveSetup();render();return}
+  if(['seven','eights','jacks','jokers'].includes(a)){setup[a]=el.checked;saveSetup();return}
+  if(a==='deal'){saveSetup();newGame();return}
+  if(a==='menu'){clearTimeout(timer);timer=null;S=null;pass=null;render();return}
+  if(a==='again'){newGame();return}
+  if(a==='reveal'){pass=null;render();return}
+  if(a==='swap-done'){if(ON)onlineReady();else finishSwap();return}
+  if(a==='create'){createGame();return}
+  if(a==='join'){joinGame(document.getElementById('ocode').value);return}
+  if(a==='rejoin'){joinGame(savedCode());return}
+  if(a==='leave'){leaveOnline();return}
+  if(a==='add-cpu'){if(ON&&ON.game)ON.ref.update({cpus:Math.min(3,(ON.game.cpus||0)+1)}).catch(onErr);return}
+  if(a==='del-cpu'){if(ON&&ON.game)ON.ref.update({cpus:Math.max(0,(ON.game.cpus||0)-1)}).catch(onErr);return}
+  if(a==='start-online'){hostStart();return}
+  if(a==='again-online'){hostAgain();return}
+  if(a==='play'){const p=S.players[S.viewer];if(sel.idx.length&&S.turn===S.viewer)doPlay(S.viewer,sel.zone,sel.idx);return}
+  if(a==='pickup'){if(S.turn===S.viewer)pickUp(S.viewer);return}
+  if(a==='clear'){sel={zone:null,idx:[]};render();return}
+}
+
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-z]');
+  if(c){onCard(c.dataset.z,+c.dataset.i);return}
+  const b=e.target.closest('[data-act]');
+  if(b&&b.type!=='checkbox')act(b.dataset.act,b);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ocode')act('join',e.target)});
+document.addEventListener('change',e=>{
+  if(e.target.type==='checkbox')act(e.target.dataset.act,e.target);
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='oname')saveName(e.target.value);
+  if(e.target.id==='ocode')e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,'');
+  if(e.target.dataset.seat!=null){setup.seats[+e.target.dataset.seat].name=e.target.value;saveSetup()}
+});
+
+/* ---------- rendering ---------- */
+function cardHTML(c,o={}){
+  const special=c.r===2||c.r===10||(S&&S.seven&&c.r===7)||(S&&S.eights&&c.r===8)||(S&&S.jacks&&c.r===11);
+  const cls=['card',isRed(c.s)?'red':'',special?'special':'',c.r===JOKER?'joker':'',o.cls||''].join(' ');
+  const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}"`:'';
+  const style=o.style?` style="${o.style}"`:'';
+  const tag=o.zone!=null?'button':'div';
+  return `<${tag} class="${cls}"${attrs}${style} aria-label="${c.r===JOKER?'Joker':rn(c.r)+' of '+suitName(c.s)}">${c.r===JOKER?'<span class="ix">J<br>O<br>K<br>E<br>R</span><span class="pip">★</span>':`<span class="ix">${rn(c.r)}<i>${c.s}</i></span><span class="pip">${c.s}</span>`}</${tag}>`;
+}
+function backHTML(o={}){
+  const tag=o.zone!=null?'button':'div';
+  const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}" aria-label="Face-down card ${o.i+1}"`:' aria-hidden="true"';
+  return `<${tag} class="card back ${o.cls||''}"${attrs}${o.style?` style="${o.style}"`:''}></${tag}>`;
+}
+function suitName(s){return{'♠':'spades','♥':'hearts','♦':'diamonds','♣':'clubs'}[s]}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function slotsHTML(p,interactive,zoneActive){
+  let h='<div class="slots">';
+  const n=Math.max(p.down.length,p.up.length,3);
+  for(let i=0;i<3;i++){
+    h+='<div class="slot">';
+    if(i<p.down.length){
+      const act=interactive&&zoneActive==='down';
+      h+=backHTML({cls:'d '+(act?'ok':interactive&&p.up.length?'':(interactive&&zoneActive?'dim':'')),zone:act?'down':null,i});
+    }else h+='<div class="placeholder d"></div>';
+    if(i<p.up.length){
+      const c=p.up[i];let cls='u';
+      if(interactive){
+        if(S.phase==='swap')cls+=' ok'+(sel.zone==='up'&&sel.idx[0]===i?' swapsel':'');
+        else if(zoneActive==='up')cls+=canPlay(c.r)?' ok':' dim';
+        if(sel.zone==='up'&&sel.idx.includes(i)&&S.phase==='play')cls+=' sel';
+        if(nudgeId==='up:'+i)cls+=' nudge';
+      }
+      h+=cardHTML(c,{cls,zone:interactive?'up':null,i});
+    }
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+
+function wildText(){const w=['2s','10s'];if(S.eights)w.push('8s');if(S.jokers)w.push('jokers');return w.slice(0,-1).join(', ')+' and '+w[w.length-1]}
+function needText(){
+  const t=topRank();
+  const top=S.pile.length?S.pile[S.pile.length-1].r:null;
+  const inv=top!==null&&invisible(top)?`The ${top===JOKER?'joker':'8'} on top is invisible. `:'';
+  if(S.jacks&&t===11)return['J, Q, K, A or joker',inv+'A jack must be followed by a picture card'];
+  if(t===null)return['Any card',inv||'The pile is empty'];
+  if(t===2)return['Any card',inv+'A 2 reset the pile'];
+  if(S.seven&&t===7)return['7 or lower',inv+wildText()+' also play'];
+  return[`${rn(t)} or higher`,inv+wildText()+' play on anything'];
+}
+
+function renderSetup(){
+  const n=setup.count;
+  let seats='';
+  for(let k=0;k<n;k++){
+    const s=setup.seats[k];
+    seats+=`<div class="seat"><span class="num">${k+1}</span><input id="seat-${k}" data-seat="${k}" value="${esc(s.name)}" maxlength="14" aria-label="Seat ${k+1} name">${k===0?'<span class="chip">Person</span>':`<button class="btn ghost sm" data-act="seat-type" data-k="${k}">${s.type==='cpu'?'Computer':'Person'}</button>`}</div>`;
+  }
+  const hum=setup.seats.slice(0,n).filter(s=>s.type==='human').length;
+  const allPeople=hum===n,allCpu=hum===1,online=!!setup.online;
+  return `<div class="setup">
+    <div class="hero">
+      <div class="hero-cards">${[{r:10,s:'♥'},{r:2,s:'♠'},{r:7,s:'♦'},{r:14,s:'♣'}].map(c=>cardHTML(c)).join('')}</div>
+      <h1>Shithead</h1>
+      <p>Get rid of every card in your hand, then the three on the table, then the three you can't see. Whoever is left holding cards loses.</p>
+    </div>
+    <div class="panel">
+      <div class="label">Play against</div>
+      <div class="seg" role="group" aria-label="Play against"><button data-act="mode" data-m="cpu" aria-pressed="${!online&&allCpu}">Computer</button><button data-act="mode" data-m="people" aria-pressed="${!online&&allPeople}">Friends, one phone</button><button data-act="mode" data-m="online" aria-pressed="${online}">Online</button></div>
+      ${online?onlinePanelHTML():`
+      <div class="label">Players</div>
+      <div class="seg" role="group" aria-label="Number of players">${[2,3,4].map(k=>`<button data-act="players" data-n="${k}" aria-pressed="${k===n}">${k}</button>`).join('')}</div>
+      ${seats}
+      <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">${hum>1?`${hum} people will pass one device between turns. Hands are hidden until each player taps to reveal.`:'You can also mix: tap Computer or Person beside a seat to switch it.'}</p>`}
+    </div>
+    <div class="panel">
+      ${togglesHTML()}
+    </div>
+    ${online?'':'<div class="actions"><button class="btn" data-act="deal">Deal cards</button></div>'}
+    ${rulesHTML()}
+  </div>`;
+}
+
+function togglesHTML(){
+  return `<label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means lower<small>After a 7, the next player must play a 7 or lower (or a 2 or 10).</small></span></label>
+      <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Jack needs a picture card<small>After a jack, the next player must play a J, Q, K, A or a joker. Nothing else goes.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="jokers" data-act="jokers" ${setup.jokers?'checked':''}><span>Jokers<small>Two jokers in the deck. A joker is invisible, plays on anything, and with 3 or more players it reverses the direction of play.</small></span></label>`;
+}
+function rulesHTML(){
+  return `<details class="rules"><summary>How to play</summary><ul>
+    <li>Everyone gets 3 face-down cards, 3 face-up cards on top of them, and 3 in hand. Before play, swap cards between your hand and your face-up cards. High cards, 2s and 10s make good face-up cards.</li>
+    <li>On your turn, play a card of equal or higher rank than the top of the pile. Play several of the same rank together if you like.</li>
+    <li>If you can't play, you pick up the whole pile.</li>
+    <li>While the deck lasts, your hand refills to 3. After that, play your face-up cards, then your face-down cards blind. A blind card that can't go means picking up the pile.</li>
+    <li>A 2 resets the pile. A 10 burns it and you go again. Four of the same rank in a row also burns it.</li>
+    <li>With the 7 rule on, a 7 forces the next player to play 7 or lower.</li>
+    <li>With invisible 8s on, an 8 plays on anything and the next player plays on the card beneath it.</li>
+    <li>With the jack rule on, a jack must be followed by a J, Q, K, A or joker.</li>
+    <li>With jokers on, a joker is invisible, plays on anything (even a jack), and with 3 or more players left it reverses the direction of play.</li>
+    <li>The last player still holding cards is the shithead.</li>
+  </ul></details>`;
+}
+
+function oppHTML(i){
+  const p=S.players[i];
+  const place=S.finish.indexOf(i);
+  const status=p.out?`<span class="chip out">Out · ${ordinal(place+1)}</span>`:S.turn===i&&S.phase==='play'?'<span class="chip turn">Playing</span>':p.type==='cpu'?'<span class="chip cpu">Computer</span>':'<span class="chip">Person</span>';
+  const fan=p.hand.slice(0,6).map(()=>backHTML()).join('');
+  return `<div class="opp ${S.turn===i&&S.phase==='play'&&!p.out?'active':''}">
+    <div class="opp-head"><h3>${esc(p.name)}</h3>${status}</div>
+    <div class="opp-body">
+      <div class="zone"><span class="label">Hand</span><div class="fan">${fan||'<div class="placeholder"></div>'}<span class="count">${p.hand.length}</span></div></div>
+      <div class="zone"><span class="label">Table</span>${slotsHTML(p,false)}</div>
+    </div></div>`;
+}
+function ordinal(n){return n+(['th','st','nd','rd'][n]||'th')}
+
+function renderGame(){
+  const v=S.viewer,me=S.players[v];
+  const n=S.players.length;
+  const order=[];for(let k=1;k<n;k++)order.push((v+k)%n);
+  const myTurn=S.phase==='play'&&S.turn===v&&me.type==='human';
+  const z=zoneOf(me);
+  const [need,needSub]=needText();
+  const pileCards=S.pile.slice(-5);
+  const pile=pileCards.map((c,k)=>{const rot=((c.id*37)%15)-7;const dx=(k-(pileCards.length-1))*10;return cardHTML(c,{style:`transform:translateX(${dx}px) rotate(${rot}deg)`})}).join('');
+  const flash=S.flash==='burn'||(S.burnSeq&&S.burnSeq!==seenBurn);seenBurn=S.burnSeq;
+
+  let prompt='',actions='';
+  if(S.phase==='swap'){
+    if(ON&&ON.readyRound===S.round){
+      const w=S.players.filter(p=>p.type==='human'&&((ON.seats.find(x=>x.uid===p.uid)||{}).ready!==S.round)).map(p=>esc(p.name));
+      prompt=w.length?`Ready. Waiting for ${w.join(', ')} to finish swapping.`:'Everyone is ready. Starting…';actions='';
+    }else{
+    prompt=sel.zone?`Now tap a ${sel.zone==='hand'?'face-up':'hand'} card to swap it.`:'Tap a hand card and a face-up card to swap them.';
+    actions=`<button class="btn" data-act="swap-done">${ON?"I'm ready":S.swapQ.length>1?'Done, next player':'Start game'}</button>`;
+    }
+  }else if(myTurn){
+    const can=hasMove(me);
+    if(!can)prompt=`Nothing you hold can go on ${rn(topRank())}. Pick up the pile.`;
+    else if(z==='down')prompt='Flip one of your face-down cards. Good luck.';
+    else if(sel.idx.length)prompt=`Play ${sel.idx.length} × ${rn(me[z][sel.idx[0]].r)}? Tap a card to leave it out.`;
+    else prompt=z==='up'?'Your hand is empty. Play from your face-up cards.':'Your turn. Tap a card to select it.';
+    actions=can?(z==='down'?'':`<button class="btn" data-act="play" ${sel.idx.length?'':'disabled'}>Play${sel.idx.length?` ${sel.idx.length} × ${rn(me[z][sel.idx[0]].r)}`:''}</button>${sel.idx.length?'<button class="btn ghost" data-act="clear">Clear</button>':''}`)
+               :`<button class="btn warn" data-act="pickup">Pick up ${S.pile.length} card${S.pile.length===1?'':'s'}</button>`;
+  }else if(S.phase==='play'){
+    prompt=me.out?`You're out in ${ordinal(S.finish.indexOf(v)+1)} place. Watching the rest.`:`Waiting for ${esc(S.players[S.turn].name)}…`;
+  }
+
+  const hand=me.hand.map((c,i)=>{
+    let cls='';
+    if(S.phase==='swap'){cls='ok'+(sel.zone==='hand'&&sel.idx[0]===i?' swapsel':'')}
+    else if(myTurn&&z==='hand'){cls=canPlay(c.r)?'ok':'dim';if(sel.zone==='hand'&&sel.idx.includes(i))cls+=' sel'}
+    if(nudgeId==='hand:'+i)cls+=' nudge';
+    return cardHTML(c,{cls,zone:'hand',i});
+  }).join('');
+
+  const meStatus=me.out?`<span class="chip out">Out · ${ordinal(S.finish.indexOf(v)+1)}</span>`:myTurn?'<span class="chip turn">Your turn</span>':'';
+  const deckTop=S.deck.length?backHTML()+(S.deck.length>1?backHTML():''):'<div class="placeholder"></div>';
+
+  let html=`<div class="bar"><div class="brand"><span class="mark"></span>Shithead</div>${ON?`<span class="chip">Game ${ON.code}</span><button class="btn ghost sm" data-act="leave">Leave</button>`:'<button class="btn ghost sm" data-act="menu">New game</button>'}</div>
+  ${onlineMsg?`<div class="note warn">${esc(onlineMsg)}</div>`:''}
+  <section class="opps" aria-label="Opponents">${order.map(oppHTML).join('')}</section>
+  <section class="centre">
+    <div class="stack"><div class="deckpile">${deckTop}</div><span class="label">Deck · ${S.deck.length}</span>${S.dir===-1?'<span class="label" style="color:var(--accent)">Reversed</span>':''}</div>
+    <div class="pilewrap"><div class="pile ${flash?'burn':''}">${pile||'<div class="placeholder"></div>'}</div><span class="label">Pile · ${S.pile.length}${S.burned?` · Burned ${S.burned}`:''}</span></div>
+    <div class="need-col"><div class="flash">${flash?'Burned':''}</div><div class="need">${S.phase==='play'?need:'Swap phase'}<small>${S.phase==='play'?needSub:'Set up your face-up cards'}</small></div></div>
+  </section>
+  <div class="log" aria-live="polite">${S.log.slice(-3).map(t=>`<div>${esc(t)}</div>`).join('')}</div>
+  <section class="me ${myTurn||S.phase==='swap'?'active':''}">
+    <div class="me-head"><h2>${esc(me.name)}</h2>${meStatus}</div>
+    <div class="prompt">${prompt}</div>
+    <div class="me-row">
+      <div class="zone"><span class="label">Table</span>${slotsHTML(me,true,myTurn?z:null)}</div>
+      <div class="zone" style="flex:1"><span class="label">Hand · ${me.hand.length}</span><div class="hand ${me.hand.length>12?'tight':''}">${hand||'<div class="placeholder"></div>'}</div></div>
+    </div>
+    <div class="actions">${actions}</div>
+  </section>
+  ${rulesHTML()}`;
+  S.flash=null;
+
+  if(pass){
+    const p=S.players[pass.pi];
+    html+=`<div class="cover"><div class="cover-box"><span class="label">${pass.why==='swap'?'Set-up':'Next turn'}</span><h2>Pass to ${esc(p.name)}</h2><p>${pass.why==='swap'?'Everyone else look away while they arrange their face-up cards.':'Everyone else look away. Their hand shows once they tap below.'}</p><button class="btn" data-act="reveal">I'm ${esc(p.name)}, show my cards</button></div></div>`;
+  }
+  if(S.phase==='over'){
+    const ranks=S.finish.map((pi,k)=>`<li><b>${ordinal(k+1)}</b>${esc(S.players[pi].name)}</li>`).join('');
+    const sh=S.shithead!=null?S.players[S.shithead]:null;
+    html+=`<div class="cover"><div class="cover-box"><span class="label">Game over</span><h2>${sh?`${esc(sh.name)} ${sh.name==='You'?'are':'is'} the shithead`:'Game over'}</h2>
+      <ol class="ranks">${ranks}${sh?`<li class="loser"><b>Last</b>${esc(sh.name)}</li>`:''}</ol>
+      <div class="actions">${ON?(ON.host?'<button class="btn" data-act="again-online">Deal again</button>':'<span class="prompt">Waiting for the host to deal again.</span>')+'<button class="btn ghost" data-act="leave">Leave game</button>':'<button class="btn" data-act="again">Play again</button><button class="btn ghost" data-act="menu">Change players</button>'}</div></div></div>`;
+  }
+  return html;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(ON&&(!S||!ON.game||ON.game.status==='lobby'||S.viewer<0))app.innerHTML=renderLobby();
+  else app.innerHTML=S?renderGame():renderSetup();
+  if(ON&&S&&S.phase==='play')document.title=S.turn===S.viewer?'Your turn · Shithead':'Shithead';
+}
+
+
+/* ---------- online play (each player on their own phone) ---------- */
+let ON=null;         // {code, uid, ref, game, seats, rev, host, readyRound, writing}
+let onlineApi=null;  // null while checking, false when unavailable, else {db,uid,canWrite}
+let onlineMsg='';
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return''}}
+function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}
+const myName=()=>lsGet('shithead-name');
+const saveName=n=>lsSet('shithead-name',n);
+const savedCode=()=>lsGet('shithead-code');
+const saveCode=c=>lsSet('shithead-code',c);
+function genCode(){const A='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c}
+function onErr(e){onlineMsg=e&&e.code==='revoked'?'You no longer have access to this game.':'Lost touch with the game. Check your connection.';render()}
+function say(m){onlineMsg=m;render()}
+
+async function initOnline(){
+  try{
+    if(!window.claude||!window.claude.use){onlineApi=false;render();return}
+    const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    const uid=user?await user.id():null;
+    let canWrite=null;try{canWrite=user&&user.can?await user.can('data.write'):null}catch(e){}
+    onlineApi=db&&uid?{db,uid,canWrite}:false;
+  }catch(e){onlineApi=false}
+  if(onlineApi&&savedCode()&&!S&&!ON)enterGame(savedCode());
+  else if(!S)render();
+}
+
+function onlinePanelHTML(){
+  if(onlineApi===null)return '<p class="note">Connecting…</p>';
+  if(onlineApi===false)return '<p class="note">Online play works when this game is opened from its claude.ai link while signed in. It isn\'t available in a downloaded or installed copy.</p>';
+  if(onlineApi.canWrite===false)return '<p class="note">You can look at this game but not play online. Ask the person who shared it to invite you as an Editor.</p>';
+  const code=savedCode();
+  return `<div class="label">Your name</div>
+    <input class="text" id="oname" value="${esc(myName())}" maxlength="14" placeholder="Name shown to other players" autocomplete="nickname">
+    <div class="actions"><button class="btn" data-act="create">Create a game</button></div>
+    <div class="label">Or join a friend's game</div>
+    <div class="joinrow"><input class="text" id="ocode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Game code"><button class="btn ghost" data-act="join">Join</button>${code?`<button class="btn ghost" data-act="rejoin">Rejoin ${esc(code)}</button>`:''}</div>
+    ${onlineMsg?`<p class="note warn">${esc(onlineMsg)}</p>`:''}
+    <p class="note">Each friend opens this same game link on their own phone, picks Online and types your code. They need a Claude account, and you need to share the game with them as an Editor from the Share menu.</p>`;
+}
+
+function nameOrAsk(){
+  const el=document.getElementById('oname');const n=((el&&el.value)||myName()).trim();
+  if(!n){say('Enter your name first.');return null}
+  saveName(n);return n;
+}
+
+async function createGame(){
+  const name=nameOrAsk();if(!name)return;
+  const {db,uid}=onlineApi;onlineMsg='';
+  try{
+    let code=genCode();
+    for(let t=0;t<5;t++){const g=await db.doc('games/'+code).get();if(!g.exists)break;code=genCode()}
+    await db.doc('games/'+code).set({code,host:uid,status:'lobby',cpus:0,created:Date.now(),rev:0,state:''});
+    await db.doc(`games/${code}/seats/${uid}`).set({name,joined:Date.now(),ready:-1});
+    enterGame(code);
+  }catch(e){say(e&&e.code==='invalid_argument'?'You can\'t create games here. Ask the owner to invite you as an Editor.':'Couldn\'t create the game. Try again in a moment.')}
+}
+
+async function joinGame(raw){
+  const code=String(raw||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(code.length!==4){say('Game codes are 4 letters.');return}
+  const name=nameOrAsk();if(!name)return;
+  const {db,uid}=onlineApi;onlineMsg='';
+  try{
+    const g=await db.doc('games/'+code).get();
+    if(!g.exists){saveCode('');say(`There's no game with the code ${code}. Check it with the host.`);return}
+    const d=g.data();
+    const seats=await db.collection(`games/${code}/seats`).get();
+    const mine=seats.docs.find(x=>x.id===uid);
+    if(!mine){
+      if(d.status!=='lobby'){say('That game has already started.');return}
+      if(seats.size+(d.cpus||0)>=4){say('That game is full.');return}
+      await db.doc(`games/${code}/seats/${uid}`).set({name,joined:Date.now(),ready:-1});
+    }else if(d.status==='lobby'&&mine.data().name!==name){
+      await db.doc(`games/${code}/seats/${uid}`).update({name});
+    }
+    enterGame(code);
+  }catch(e){say('Couldn\'t join that game. Try again in a moment.')}
+}
+
+function enterGame(code){
+  const {db,uid}=onlineApi;
+  saveCode(code);clearTimeout(timer);timer=null;
+  S=null;pass=null;onlineMsg='';
+  ON={code,uid,ref:db.doc('games/'+code),game:null,seats:[],rev:-1,host:false,readyRound:null,writing:Promise.resolve(),loaded:false};
+  ON.unsubGame=ON.ref.onSnapshot(onGame,onErr);
+  ON.unsubSeats=db.collection(`games/${code}/seats`).orderBy('joined').onSnapshot(onSeats,onErr);
+  setTimeout(()=>{if(ON&&!ON.loaded){onlineMsg='Still trying to reach the game…';render()}},10000);
+  render();
+}
+
+function leaveOnline(){
+  if(!ON)return;
+  const o=ON;ON=null;
+  o.unsubGame&&o.unsubGame();o.unsubSeats&&o.unsubSeats();
+  if(o.game&&o.game.status==='lobby')onlineApi.db.doc(`games/${o.code}/seats/${o.uid}`).delete().catch(()=>{});
+  saveCode('');clearTimeout(timer);timer=null;S=null;pass=null;onlineMsg='';document.title='Shithead';
+  render();
+}
+
+function onGame(snap){
+  if(!ON)return;
+  ON.loaded=true;if(onlineMsg.startsWith('Still'))onlineMsg='';
+  if(!snap.exists){const c=ON.code;leaveOnline();say(`Game ${c} no longer exists.`);return}
+  const d=snap.data();ON.game=d;ON.host=d.host===ON.uid;
+  if(d.state&&d.rev>ON.rev){
+    ON.rev=d.rev;
+    const prevRound=S&&S.round;
+    S=JSON.parse(d.state);
+    S.viewer=S.players.findIndex(p=>p.uid===ON.uid);
+    if(S.round!==prevRound)ON.readyRound=null;
+    sel={zone:null,idx:[]};pass=null;
+  }
+  render();maybeCpu();hostCheckReady();
+}
+
+function onSeats(snap){
+  if(!ON)return;
+  ON.seats=snap.docs.map(x=>Object.assign({uid:x.id},x.data()));
+  const me=ON.seats.find(x=>x.uid===ON.uid);
+  if(S&&me&&me.ready===S.round)ON.readyRound=S.round;
+  render();hostCheckReady();
+}
+
+function push(){
+  if(!ON)return;
+  S.rev=Math.max(S.rev||0,ON.rev)+1;ON.rev=S.rev;
+  const body={state:JSON.stringify(Object.assign({},S,{viewer:-1})),status:S.phase,rev:S.rev};
+  ON.writing=ON.writing.then(()=>ON&&ON.ref.update(body)).catch(()=>say('Your move couldn\'t be saved. Check your connection.'));
+  maybeCpu();
+}
+
+function maybeCpu(){
+  if(ON&&ON.host&&S&&S.phase==='play'&&S.players[S.turn].type==='cpu'&&!timer)
+    timer=setTimeout(()=>{timer=null;aiMove()},DELAY);
+}
+
+function dealOnline(seats,round){
+  buildGame(seats,setup);
+  S.round=round;S.rev=ON.rev;
+  S.viewer=S.players.findIndex(p=>p.uid===ON.uid);
+  ON.readyRound=null;sel={zone:null,idx:[]};pass=null;
+  log('Cards dealt. Swap hand and face-up cards, then tap I\'m ready.');
+  render();push();
+}
+function hostStart(){
+  if(!ON||!ON.host||!ON.game)return;
+  const cpus=ON.game.cpus||0;
+  if(ON.seats.length+cpus<2)return;
+  const seats=[...ON.seats.slice(0,4).map(x=>({name:x.name,type:'human',uid:x.uid})),...CPU_NAMES.slice(0,Math.min(cpus,4-ON.seats.length)).map(n=>({name:n,type:'cpu'}))];
+  dealOnline(seats,1);
+}
+function hostAgain(){
+  if(!ON||!ON.host||!S)return;
+  dealOnline(S.players.map(p=>({name:p.name,type:p.type,uid:p.uid})),(S.round||1)+1);
+}
+function onlineReady(){
+  if(!ON||!S||S.viewer<0)return;
+  const me=S.players[S.viewer];
+  ON.readyRound=S.round;sel={zone:null,idx:[]};
+  onlineApi.db.doc(`games/${ON.code}/seats/${ON.uid}`).update({ready:S.round,up:me.up.map(c=>c.id)}).catch(()=>{ON.readyRound=null;say('Couldn\'t send that. Try again.')});
+  render();
+}
+function hostCheckReady(){
+  if(!ON||!ON.host||!S||S.phase!=='swap'||ON.starting===S.round)return;
+  const hs=S.players.filter(p=>p.type==='human');
+  const seatOf=p=>ON.seats.find(x=>x.uid===p.uid);
+  if(!hs.every(p=>{const x=seatOf(p);return x&&x.ready===S.round}))return;
+  ON.starting=S.round;
+  for(const p of hs){
+    const ids=(seatOf(p).up||[]);const pool=[...p.hand,...p.up];
+    const up=pool.filter(c=>ids.includes(c.id));
+    if(up.length===3){p.up=up;p.hand=pool.filter(c=>!ids.includes(c.id));sortHand(p)}
+  }
+  startPlay();
+}
+
+function renderLobby(){
+  const g=ON.game;
+  const bar=`<div class="bar"><div class="brand"><span class="mark"></span>Shithead</div><button class="btn ghost sm" data-act="leave">Leave</button></div>`;
+  if(!g)return bar+`<div class="setup"><div class="panel"><p class="note">Opening game ${esc(ON.code)}…</p>${onlineMsg?`<p class="note warn">${esc(onlineMsg)}</p>`:''}</div></div>`;
+  if(g.status!=='lobby'&&S&&S.viewer<0)return bar+`<div class="setup"><div class="panel"><h2>Game ${esc(ON.code)} started without you</h2><p class="note">It began before you joined. Ask the host to start a new game.</p><div class="actions"><button class="btn" data-act="leave">Back</button></div></div></div>`;
+  const cpus=g.cpus||0,total=ON.seats.length+cpus;
+  const hostSeat=ON.seats.find(x=>x.uid===g.host);
+  const rows=ON.seats.map(x=>`<li><span>${esc(x.name)}${x.uid===ON.uid?' (you)':''}</span>${x.uid===g.host?'<span class="chip turn">Host</span>':'<span class="chip">Joined</span>'}</li>`).join('')
+    +CPU_NAMES.slice(0,cpus).map(n=>`<li><span>${n}</span><span class="chip cpu">Computer</span></li>`).join('');
+  const hostCtl=ON.host?`<div class="actions">${total<4?'<button class="btn ghost sm" data-act="add-cpu">Add computer</button>':''}${cpus?'<button class="btn ghost sm" data-act="del-cpu">Remove computer</button>':''}</div>`:'';
+  const toggles=ON.host?`<div class="panel"><div class="label">House rules</div>${togglesHTML()}</div>`:'';
+  return bar+`<div class="setup">
+    <div class="panel">
+      <div class="label">Game code</div>
+      <div class="bigcode">${esc(ON.code)}</div>
+      <p class="note">Friends open this game on their phones, pick Online and enter this code. Up to 4 players.</p>
+    </div>
+    <div class="panel">
+      <div class="label">Players · ${total} of 4</div>
+      <ul class="plist">${rows}</ul>
+      ${hostCtl}
+    </div>
+    ${toggles}
+    ${onlineMsg?`<p class="note warn">${esc(onlineMsg)}</p>`:''}
+    <div class="actions">${ON.host?`<button class="btn" data-act="start-online" ${total<2?'disabled':''}>Start game</button>${total<2?'<span class="note">Waiting for at least one more player.</span>':''}`:`<span class="prompt">Waiting for ${esc(hostSeat?hostSeat.name:'the host')} to start.</span>`}</div>
+  </div>`;
+}
+
+/* keep a running game across page updates */
+window.claude?.hot?.snapshot?.(()=>(ON?{setup}:{S,setup,pass}));
+function start(d){
+  if(d&&d.setup)setup=d.setup;
+  if(d&&d.S){S=d.S;pass=d.pass||null}
+  render();
+  if(S&&S.phase==='play'&&S.players[S.turn].type==='cpu')timer=setTimeout(aiMove,DELAY);
+  initOnline();
+}
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js');</script>
+</body>
+</html>
