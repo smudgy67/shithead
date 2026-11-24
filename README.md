@@ -2,6 +2,10 @@
 
 The whole game is one file, `www/index.html`. There are three ways to get it on an Android phone.
 
+## Download the APK
+
+On your phone, open https://github.com/smudgy67/shithead/releases/latest/download/shithead.apk and install it. Android will ask you to allow installs from your browser the first time.
+
 ## 1. Install it from Chrome (easiest, no tools needed)
 
 The `www` folder is an installable web app. Put it on any free HTTPS host, then open it in Chrome on the phone and choose **Add to Home screen** (or **Install app**). It opens full screen in portrait and works offline after the first visit.
