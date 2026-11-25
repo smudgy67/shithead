@@ -276,7 +276,32 @@ function buildGame(seats,rules){
   for(const k of ['down','up','hand'])for(let i=0;i<3;i++)for(const p of S.players)p[k].push(deck.pop());
   S.players.forEach(p=>{if(p.type==='cpu')aiSwap(p);sortHand(p)});
 }
+/* step back: a copy of the game at the start of each person's turn (not in online games) */
+let history=[];
+function remember(){
+  if(ON||!S)return;
+  const snap=JSON.stringify(S);
+  if(history[history.length-1]!==snap){history.push(snap);if(history.length>60)history.shift()}
+}
+function canStepBack(){
+  if(ON||!S||S.phase==='swap')return false;
+  const cur=JSON.stringify(S);
+  return history.some(h=>h!==cur);
+}
+function stepBack(){
+  if(!canStepBack())return;
+  clearTimeout(timer);timer=null;
+  const cur=JSON.stringify(S);
+  while(history.length&&history[history.length-1]===cur)history.pop();
+  const snap=history[history.length-1];
+  if(!snap)return;
+  S=JSON.parse(snap);sel={zone:null,idx:[]};pass=null;
+  log('Stepped back to the start of '+(S.players[S.turn].name==='You'?'your':S.players[S.turn].name+"'s")+' turn.');
+  history[history.length-1]=JSON.stringify(S);
+  render();
+}
 function newGame(){
+  history=[];
   buildGame(setup.seats.slice(0,setup.count),setup);
   S.swapQ=humans();
   S.viewer=S.swapQ[0]??0;
@@ -315,6 +340,7 @@ function beginTurn(){
   if(p.type==='cpu'){render();timer=setTimeout(aiMove,DELAY);return}
   if(S.viewer!==S.turn){S.viewer=S.turn;if(multiHuman())pass={pi:S.turn,why:'turn'}}
   render();
+  remember();
 }
 
 function advance(){
@@ -460,6 +486,7 @@ function act(a,el){
   if(a==='mode'){setup.online=false;const h=el.dataset.m==='people';for(let k=1;k<4;k++){const st=setup.seats[k];st.type=h?'human':'cpu';st.name=h?`Player ${k+1}`:CPU_NAMES[k-1]}if(h&&setup.seats[0].name==='You')setup.seats[0].name='Player 1';if(!h&&setup.seats[0].name==='Player 1')setup.seats[0].name='You';saveSetup();render();return}
   if(['seven','eights','jacks','jokers'].includes(a)){setup[a]=el.checked;saveSetup();return}
   if(a==='deal'){saveSetup();newGame();return}
+  if(a==='undo'){stepBack();return}
   if(a==='settings'){renderAppSettings();document.getElementById('settingsSheet').hidden=false;return}
   if(a==='menu'){clearTimeout(timer);timer=null;S=null;pass=null;render();return}
   if(a==='again'){newGame();return}
@@ -495,6 +522,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'||e.key===' '){click('[data-act=reveal]')||click('[data-act=play]')||click('[data-act=pickup]')||click('[data-act=swap-done]')}
   else if(e.key==='p'||e.key==='P')click('[data-act=pickup]');
   else if(e.key==='Escape')click('[data-act=clear]');
+  else if((e.key==='z'||e.key==='Z')&&(e.ctrlKey||e.metaKey)){e.preventDefault();stepBack()}
 });
 let lastTap={k:'',t:0};
 function quickPlay(z,i){
@@ -690,7 +718,7 @@ function renderGame(){
   const meStatus=me.out?`<span class="chip out">Out · ${ordinal(S.finish.indexOf(v)+1)}</span>`:myTurn?'<span class="chip turn">Your turn</span>':'';
   const deckTop=S.deck.length?backHTML()+(S.deck.length>1?backHTML():''):'<div class="placeholder"></div>';
 
-  topActions=ON?`<span class="chip">Game ${ON.code}</span><button class="btn ghost sm" data-act="leave">Leave</button>`:'<button class="btn ghost sm" data-act="menu">New game</button>';
+  topActions=ON?`<span class="chip">Game ${ON.code}</span><button class="btn ghost sm" data-act="leave">Leave</button>`:(canStepBack()?'<button class="btn ghost sm" data-act="undo" title="Undo your last turn (Ctrl+Z)">↶ step back</button>':'')+'<button class="btn ghost sm" data-act="menu">New game</button>';
   let html=`
   ${onlineMsg?`<div class="note warn">${esc(onlineMsg)}</div>`:''}
   <section class="opps" aria-label="Opponents">${order.map(oppHTML).join('')}</section>
