@@ -68,8 +68,10 @@ body.home .title .tbox b{font-size:1.3rem}
 /* cards */
 .card{width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.11);background:var(--face);color:var(--face-ink);position:relative;border:0;padding:0;font-family:var(--display);text-transform:none;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28);flex:none;display:block;transition:transform .15s,box-shadow .15s,filter .15s;cursor:default;user-select:none}
 .card.red{color:var(--red)}
-.card.joker{color:var(--joker);background:linear-gradient(160deg,var(--face) 55%,#ece7fb)}
-.card.joker .morse{position:absolute;inset:0;width:100%;height:100%;fill:currentColor}
+.card.joker{color:var(--face-ink)}
+.card.joker.red{color:var(--red)}
+.card.joker .ix{font-size:calc(var(--cw)*.14);line-height:1.02;top:7%;left:9%}
+.card.joker .pip{right:50%;bottom:50%;transform:translate(50%,50%);font-size:calc(var(--cw)*.6)}
 .card .ix{position:absolute;top:7%;left:10%;font-weight:800;font-size:calc(var(--cw)*.29);line-height:.92;display:flex;flex-direction:column;align-items:center}
 .card .ix i{font-style:normal;font-size:.72em}
 .card .pip{position:absolute;right:9%;bottom:5%;font-size:calc(var(--cw)*.5);line-height:1}
@@ -143,12 +145,11 @@ body.home .title .tbox b{font-size:1.3rem}
 .hero{display:flex;flex-direction:column;gap:10px}
 .hero h1{display:none;font-size:clamp(44px,12vw,76px);font-weight:800;line-height:.9}
 .hero p{margin:0;color:var(--muted);max-width:46ch;line-height:1.5}
-.hero-cards{--cw:58px;display:flex;gap:0;margin-bottom:6px}
-.hero-cards .card{margin-right:-14px}
-.hero-cards .card:nth-child(1){transform:rotate(-12deg) translateY(6px)}
-.hero-cards .card:nth-child(2){transform:rotate(-4deg)}
-.hero-cards .card:nth-child(3){transform:rotate(5deg)}
-.hero-cards .card:nth-child(4){transform:rotate(13deg) translateY(6px)}
+.hero-cards{--cw:clamp(20px,6.4vw,30px);display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.mrow{display:flex;gap:calc(var(--cw)*.5);flex-wrap:nowrap}
+.mletter{display:flex;gap:3px}
+.hero-cards .card.joker .ix{display:none}
+.hero-cards .card{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(0,0,0,.2)}
 .panel{background:var(--panel);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px var(--line)}
 .seg{display:inline-flex;flex-wrap:wrap;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:999px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;border-radius:999px;padding:7px 16px;font-family:var(--display);font-weight:700;cursor:pointer;color:var(--muted)}
@@ -269,7 +270,7 @@ function buildGame(seats,rules){
   clearTimeout(timer);timer=null;
   const deck=[];let id=0;
   for(const s of SUITS)for(let r=2;r<=14;r++)deck.push({r,s,id:id++});
-  if(rules.jokers){deck.push({r:JOKER,s:'★',id:id++},{r:JOKER,s:'★',id:id++})}
+  if(rules.jokers){deck.push({r:JOKER,s:'★',jc:'red',id:id++},{r:JOKER,s:'★',jc:'black',id:id++})}
   shuffle(deck);
   S={players:seats.map((x,i)=>({name:(x.name||'').trim()||(x.type==='cpu'?CPU_NAMES[i-1]||'Computer':`Player ${i+1}`),type:x.type,uid:x.uid||null,hand:[],up:[],down:[],out:false})),
      deck,pile:[],burned:0,turn:0,phase:'swap',seven:rules.seven,eights:rules.eights,jacks:rules.jacks,jokers:rules.jokers,dir:1,finish:[],log:[],viewer:0,swapQ:[],flash:null,shithead:null,burnSeq:0,round:1,rev:0};
@@ -543,26 +544,19 @@ document.addEventListener('input',e=>{
 /* ---------- rendering ---------- */
 function cardHTML(c,o={}){
   const special=c.r===2||c.r===10||(S&&S.seven&&c.r===7)||(S&&S.eights&&c.r===8)||(S&&S.jacks&&c.r===11);
-  const cls=['card',isRed(c.s)?'red':'',special?'special':'',c.r===JOKER?'joker':'',o.cls||''].join(' ');
+  const cls=['card',(isRed(c.s)||(c.r===JOKER&&jokerRed(c)))?'red':'',special?'special':'',c.r===JOKER?'joker':'',o.cls||''].join(' ');
   const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}"`:'';
   const style=o.style?` style="${o.style}"`:'';
   const tag=o.zone!=null?'button':'div';
-  return `<${tag} class="${cls}"${attrs}${style} aria-label="${c.r===JOKER?'Joker, shithead in morse code':rn(c.r)+' of '+suitName(c.s)}">${c.r===JOKER?JOKER_FACE:`<span class="ix">${rn(c.r)}<i>${c.s}</i></span><span class="pip">${c.s}</span>`}</${tag}>`;
+  return `<${tag} class="${cls}"${attrs}${style} aria-label="${c.r===JOKER?(jokerRed(c)?'Red joker':'Black joker'):rn(c.r)+' of '+suitName(c.s)}">${c.r===JOKER?'<span class="ix">J<br>O<br>K<br>E<br>R</span><span class="pip">★</span>':`<span class="ix">${rn(c.r)}<i>${c.s}</i></span><span class="pip">${c.s}</span>`}</${tag}>`;
 }
-// joker face: "shithead" spelt in morse code, one letter per row
-const MORSE_WORD=[['s','...'],['h','....'],['i','..'],['t','-'],['h','....'],['e','.'],['a','.-'],['d','-..']];
-const JOKER_FACE=(()=>{
-  let g='';const top=13,step=7.1,dot=1.7,dash=9,gap=2.6;
-  MORSE_WORD.forEach(([,code],row)=>{
-    const w=[...code].reduce((a,ch)=>a+(ch==='.'?dot*2:dash),0)+gap*(code.length-1);
-    let x=25-w/2;const y=top+row*step;
-    for(const ch of code){
-      if(ch==='.'){g+=`<circle cx="${(x+dot).toFixed(2)}" cy="${y.toFixed(2)}" r="${dot}"/>`;x+=dot*2+gap}
-      else{g+=`<rect x="${x.toFixed(2)}" y="${(y-dot).toFixed(2)}" width="${dash}" height="${dot*2}" rx="${dot}"/>`;x+=dash+gap}
-    }
-  });
-  return `<svg class="morse" viewBox="0 0 50 70" aria-hidden="true"><text x="5" y="9" font-size="7" font-weight="700">★</text><text x="45" y="66" font-size="7" font-weight="700" text-anchor="end">★</text><g fill="currentColor">${g}</g></svg>`;
-})();
+// two jokers: one red, one black
+const jokerRed=c=>c.jc?c.jc==='red':c.id%2===0;
+// start-screen logo: "shithead" in morse code laid out in jokers, red joker = dot, black joker = dash
+const MORSE_ROWS=[[['s','...'],['h','....'],['i','..'],['t','-']],[['h','....'],['e','.'],['a','.-'],['d','-..']]];
+function morseLogoHTML(){
+  return MORSE_ROWS.map(row=>`<div class="mrow">${row.map(([l,code])=>`<div class="mletter" title="${l}">${[...code].map(ch=>cardHTML({r:JOKER,s:'★',jc:ch==='.'?'red':'black'})).join('')}</div>`).join('')}</div>`).join('');
+}
 function backHTML(o={}){
   const tag=o.zone!=null?'button':'div';
   const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}" aria-label="Face-down card ${o.i+1}"`:' aria-hidden="true"';
@@ -619,7 +613,7 @@ function renderSetup(){
   const allPeople=hum===n,allCpu=hum===1,online=!!setup.online;
   return `<div class="setup">
     <div class="hero">
-      <div class="hero-cards">${[{r:10,s:'♥'},{r:2,s:'♠'},{r:15,s:'★'},{r:14,s:'♣'}].map(c=>cardHTML(c)).join('')}</div>
+      <div class="hero-cards" role="img" aria-label="shithead in morse code, red jokers for dots and black jokers for dashes">${morseLogoHTML()}</div>
       <h1>Shithead</h1>
       <p>Get rid of every card in your hand, then the three on the table, then the three you can't see. Whoever is left holding cards loses.</p>
     </div>
