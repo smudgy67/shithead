@@ -1063,14 +1063,14 @@ function playJokerAnim(){
   box.classList.add('jx-'+a);
   swapDotsDashes(box);
 }
-// pick a few red/black pairs, flip them so dots and dashes trade places, then flip them back
+// in some animations whole letters swap colour (S's 3 red jokers become 3 black, H's 4 red become 4 black), then swap back
 function swapDotsDashes(box){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const cards=[...box.querySelectorAll('.card')];
-  const reds=cards.filter(c=>c.classList.contains('red')),blacks=cards.filter(c=>!c.classList.contains('red'));
-  const n=1+Math.floor(Math.random()*Math.min(3,blacks.length));
-  const pick=arr=>arr.splice(Math.floor(Math.random()*arr.length),1)[0];
-  const chosen=[];for(let k=0;k<n;k++)chosen.push(pick(reds),pick(blacks));
+  if(Math.random()<0.45)return;
+  const letters=[...box.querySelectorAll('.mletter')];
+  let chosen=letters.filter(()=>Math.random()<0.5);
+  if(!chosen.length)chosen=[letters[Math.floor(Math.random()*letters.length)]];
+  chosen=chosen.flatMap(l=>[...l.querySelectorAll('.card')]);
   const flip=()=>chosen.forEach(c=>{if(!c.isConnected)return;c.classList.remove('jswap');void c.offsetWidth;c.classList.add('jswap');setTimeout(()=>c.classList.toggle('red'),250)});
   setTimeout(flip,1600);
   setTimeout(()=>{flip();setTimeout(()=>chosen.forEach(c=>c.classList.remove('jswap')),600)},3600);
