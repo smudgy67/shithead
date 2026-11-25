@@ -172,6 +172,9 @@ body.home .title .tbox b{font-size:1.3rem}
 @keyframes jxJiggle{0%,100%{transform:none}20%{transform:rotate(-16deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-9deg)}80%{transform:rotate(5deg)}}
 .hero-cards.jx-scatter .card{animation:jxScatter 1.4s cubic-bezier(.4,0,.2,1) calc(var(--d)*.2) both}
 @keyframes jxScatter{0%,100%{transform:none}45%,55%{transform:translate(var(--dx,0),var(--dy,0)) rotate(var(--dr,0))}}
+/* dot/dash swap: a few jokers trade colour mid-animation, then swap back */
+.hero-cards .card.jswap{animation:jxSwap .5s ease-in-out both!important}
+@keyframes jxSwap{0%{transform:perspective(300px) rotateY(0)}50%{transform:perspective(300px) rotateY(90deg)}100%{transform:perspective(300px) rotateY(0)}}
 @media (prefers-reduced-motion:reduce){.hero-cards .card{animation:none!important}}
 .hero-cards .card{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(0,0,0,.2)}
 .panel{background:var(--panel);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px var(--line)}
@@ -1056,6 +1059,19 @@ function playJokerAnim(){
   });
   void box.offsetWidth;
   box.classList.add('jx-'+a);
+  swapDotsDashes(box);
+}
+// pick a few red/black pairs, flip them so dots and dashes trade places, then flip them back
+function swapDotsDashes(box){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cards=[...box.querySelectorAll('.card')];
+  const reds=cards.filter(c=>c.classList.contains('red')),blacks=cards.filter(c=>!c.classList.contains('red'));
+  const n=1+Math.floor(Math.random()*Math.min(3,blacks.length));
+  const pick=arr=>arr.splice(Math.floor(Math.random()*arr.length),1)[0];
+  const chosen=[];for(let k=0;k<n;k++)chosen.push(pick(reds),pick(blacks));
+  const flip=()=>chosen.forEach(c=>{if(!c.isConnected)return;c.classList.remove('jswap');void c.offsetWidth;c.classList.add('jswap');setTimeout(()=>c.classList.toggle('red'),250)});
+  setTimeout(flip,1600);
+  setTimeout(()=>{flip();setTimeout(()=>chosen.forEach(c=>c.classList.remove('jswap')),600)},3600);
 }
 setTimeout(playJokerAnim,1200);
 setInterval(playJokerAnim,5000);
