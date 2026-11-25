@@ -154,6 +154,25 @@ body.home .title .tbox b{font-size:1.3rem}
 .mletter{display:flex;gap:3px}
 .hero-cards .card.joker .jtext{display:none}
 .hero-cards .card.joker .jester{transform:scale(1.25)}
+
+/* start-screen joker animations: one of seven plays at random every few seconds */
+.hero-cards .card{--d:calc(var(--i,0)*45ms)}
+.hero-cards.jx-wave .card{animation:jxWave .7s ease-in-out var(--d) both}
+@keyframes jxWave{0%,100%{transform:none}40%{transform:translateY(-45%)}70%{transform:translateY(6%)}}
+.hero-cards.jx-flip .card{animation:jxFlip .8s ease-in-out var(--d) both}
+@keyframes jxFlip{from{transform:perspective(300px) rotateY(0)}to{transform:perspective(300px) rotateY(360deg)}}
+.hero-cards.jx-spin .card{animation:jxSpin .9s cubic-bezier(.5,0,.3,1) var(--d) both}
+@keyframes jxSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.hero-cards.jx-drop .card{animation:jxDrop .8s cubic-bezier(.3,1.5,.5,1) var(--d) both}
+@keyframes jxDrop{0%{transform:translateY(-260%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+.hero-cards.jx-morse .card{animation:jxMorse .5s ease-out var(--d) both}
+.hero-cards.jx-morse .card.red{animation-duration:.3s}
+@keyframes jxMorse{0%{opacity:.25;transform:none}35%{opacity:1;transform:scale(1.25);box-shadow:0 0 0 2px var(--accent),0 0 18px var(--accent)}100%{opacity:1;transform:none}}
+.hero-cards.jx-jiggle .card{animation:jxJiggle .9s ease-in-out calc(var(--d)*.3) both}
+@keyframes jxJiggle{0%,100%{transform:none}20%{transform:rotate(-16deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-9deg)}80%{transform:rotate(5deg)}}
+.hero-cards.jx-scatter .card{animation:jxScatter 1.4s cubic-bezier(.4,0,.2,1) calc(var(--d)*.2) both}
+@keyframes jxScatter{0%,100%{transform:none}45%,55%{transform:translate(var(--dx,0),var(--dy,0)) rotate(var(--dr,0))}}
+@media (prefers-reduced-motion:reduce){.hero-cards .card{animation:none!important}}
 .hero-cards .card{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(0,0,0,.2)}
 .panel{background:var(--panel);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px var(--line)}
 .seg{display:inline-flex;flex-wrap:wrap;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:999px;padding:3px;gap:2px}
@@ -1019,6 +1038,27 @@ const saveAppSet=()=>{try{localStorage.setItem(SET_KEY,JSON.stringify(appSet))}c
 
 // logo: base image with 7 glow layers (red to violet). Every 3.6s the glow fades to the next colour over 1.4s,
 // while the glow swells to 106% and the whole logo to 103% and back, as in mods and sagago.
+
+/* start-screen joker animations */
+const JOKER_ANIMS=['wave','flip','spin','drop','morse','jiggle','scatter'];
+let lastJx='';
+function playJokerAnim(){
+  const box=document.querySelector('.hero-cards');
+  if(!box||document.hidden)return;
+  let a;do{a=JOKER_ANIMS[Math.floor(Math.random()*JOKER_ANIMS.length)]}while(a===lastJx&&JOKER_ANIMS.length>1);
+  lastJx=a;
+  box.className='hero-cards';
+  box.querySelectorAll('.card').forEach((c,i)=>{
+    c.style.setProperty('--i',i);
+    c.style.setProperty('--dx',(Math.random()*240-120).toFixed(0)+'%');
+    c.style.setProperty('--dy',(Math.random()*240-120).toFixed(0)+'%');
+    c.style.setProperty('--dr',(Math.random()*120-60).toFixed(0)+'deg');
+  });
+  void box.offsetWidth;
+  box.classList.add('jx-'+a);
+}
+setTimeout(playJokerAnim,1200);
+setInterval(playJokerAnim,5000);
 const logoAnim=(function(){
   const box=document.getElementById("logoAnim");if(!box)return{set(){}};
   const glows=[...box.querySelectorAll("img.g")];let cur=0,t=0,mode="rainbow";
