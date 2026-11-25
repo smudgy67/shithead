@@ -143,7 +143,7 @@ body.home .title .tbox b{font-size:1.3rem}
 .hero{display:flex;flex-direction:column;gap:10px}
 .hero h1{display:none;font-size:clamp(44px,12vw,76px);font-weight:800;line-height:.9}
 .hero p{margin:0;color:var(--muted);max-width:46ch;line-height:1.5}
-.hero-cards{--cw:44px;display:flex;gap:0;margin-bottom:6px}
+.hero-cards{--cw:58px;display:flex;gap:0;margin-bottom:6px}
 .hero-cards .card{margin-right:-14px}
 .hero-cards .card:nth-child(1){transform:rotate(-12deg) translateY(6px)}
 .hero-cards .card:nth-child(2){transform:rotate(-4deg)}
@@ -591,7 +591,7 @@ function renderSetup(){
   const allPeople=hum===n,allCpu=hum===1,online=!!setup.online;
   return `<div class="setup">
     <div class="hero">
-      <div class="hero-cards">${[{r:10,s:'♥'},{r:2,s:'♠'},{r:7,s:'♦'},{r:14,s:'♣'}].map(c=>cardHTML(c)).join('')}</div>
+      <div class="hero-cards">${[{r:10,s:'♥'},{r:2,s:'♠'},{r:15,s:'★'},{r:14,s:'♣'}].map(c=>cardHTML(c)).join('')}</div>
       <h1>Shithead</h1>
       <p>Get rid of every card in your hand, then the three on the table, then the three you can't see. Whoever is left holding cards loses.</p>
     </div>
