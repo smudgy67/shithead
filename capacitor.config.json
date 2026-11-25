@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.shithead",
-  "appName": "Shithead",
+  "appId": "net.smudgenet.shithead",
+  "appName": "shithead",
   "webDir": "www",
-  "backgroundColor": "#17202b"
+  "backgroundColor": "#efe8dc"
 }

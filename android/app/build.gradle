@@ -4,7 +4,7 @@ android {
     namespace = "com.example.shithead"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.example.shithead"
+        applicationId "net.smudgenet.shithead"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
