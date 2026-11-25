@@ -253,7 +253,7 @@ const NAMES={11:'J',12:'Q',13:'K',14:'A',15:'★'};
 const JOKER=15;
 const rn=r=>NAMES[r]||String(r);
 const isRed=s=>s==='♥'||s==='♦';
-const CPU_NAMES=['mAIm','rosAI','bobAI'];const OLD_CPU=['Rosa','Dev','Mags','mAIm 1','mAIm 2','mAIm 3','dobAI'];
+const CPU_NAMES=['mAIm','bobAI','dobAI'];const OLD_CPU=['Rosa','Dev','Mags','mAIm 1','mAIm 2','mAIm 3','rosAI'];
 let DELAY=900;
 
 let S=null;                 // game state
@@ -262,7 +262,7 @@ let pass=null;              // {pi, why} hand-over cover for pass-and-play
 let timer=null;
 let nudgeId=null;
 let seenBurn=0;
-let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'rosAI',type:'cpu'},{name:'bobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
+let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
 
 function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(st.type==='cpu'&&(OLD_CPU.includes(st.name)||CPU_NAMES.includes(st.name)))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
