@@ -179,6 +179,8 @@ body.home .title .tbox b{font-size:1.3rem}
 .hero-cards .card{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(0,0,0,.2)}
 .panel{background:var(--panel);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px var(--line)}
 .seg{display:inline-flex;flex-wrap:wrap;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:999px;padding:3px;gap:2px}
+.label.ctr{text-align:center}
+.seg.ctr{align-self:center;justify-content:center}
 .seg button{border:0;background:transparent;border-radius:999px;padding:7px 16px;font-family:var(--display);font-weight:700;cursor:pointer;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .seat{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
@@ -654,11 +656,11 @@ function renderSetup(){
       <p>Get rid of every card in your hand, then the three on the table, then the three you can't see. Whoever is left holding cards loses.</p>
     </div>
     <div class="panel">
-      <div class="label">Play against</div>
-      <div class="seg" role="group" aria-label="Play against"><button data-act="mode" data-m="cpu" aria-pressed="${!online&&allCpu}">Computer</button><button data-act="mode" data-m="people" aria-pressed="${!online&&allPeople}">Friends, one phone</button><button data-act="mode" data-m="online" aria-pressed="${online}">Online</button></div>
+      <div class="label ctr">Play against</div>
+      <div class="seg ctr" role="group" aria-label="Play against"><button data-act="mode" data-m="cpu" aria-pressed="${!online&&allCpu}">Computer</button><button data-act="mode" data-m="people" aria-pressed="${!online&&allPeople}">Friends, one phone</button><button data-act="mode" data-m="online" aria-pressed="${online}">Online</button></div>
       ${online?onlinePanelHTML():`
-      <div class="label">Players</div>
-      <div class="seg" role="group" aria-label="Number of players">${[2,3,4].map(k=>`<button data-act="players" data-n="${k}" aria-pressed="${k===n}">${k}</button>`).join('')}</div>
+      <div class="label ctr">Players</div>
+      <div class="seg ctr" role="group" aria-label="Number of players">${[2,3,4].map(k=>`<button data-act="players" data-n="${k}" aria-pressed="${k===n}">${k}</button>`).join('')}</div>
       ${seats}
       <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">${hum>1?`${hum} people will pass one device between turns. Hands are hidden until each player taps to reveal.`:'You can also mix: tap Computer or Person beside a seat to switch it.'}</p>`}
     </div>
