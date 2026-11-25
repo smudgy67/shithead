@@ -69,8 +69,7 @@ body.home .title .tbox b{font-size:1.3rem}
 .card{width:var(--cw);aspect-ratio:5/7;border-radius:calc(var(--cw)*.11);background:var(--face);color:var(--face-ink);position:relative;border:0;padding:0;font-family:var(--display);text-transform:none;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28);flex:none;display:block;transition:transform .15s,box-shadow .15s,filter .15s;cursor:default;user-select:none}
 .card.red{color:var(--red)}
 .card.joker{color:var(--joker);background:linear-gradient(160deg,var(--face) 55%,#ece7fb)}
-.card.joker .ix{font-size:calc(var(--cw)*.13);line-height:1.02;top:8%}
-.card.joker .pip{font-size:calc(var(--cw)*.62)}
+.card.joker .morse{position:absolute;inset:0;width:100%;height:100%;fill:currentColor}
 .card .ix{position:absolute;top:7%;left:10%;font-weight:800;font-size:calc(var(--cw)*.29);line-height:.92;display:flex;flex-direction:column;align-items:center}
 .card .ix i{font-style:normal;font-size:.72em}
 .card .pip{position:absolute;right:9%;bottom:5%;font-size:calc(var(--cw)*.5);line-height:1}
@@ -520,8 +519,22 @@ function cardHTML(c,o={}){
   const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}"`:'';
   const style=o.style?` style="${o.style}"`:'';
   const tag=o.zone!=null?'button':'div';
-  return `<${tag} class="${cls}"${attrs}${style} aria-label="${c.r===JOKER?'Joker':rn(c.r)+' of '+suitName(c.s)}">${c.r===JOKER?'<span class="ix">J<br>O<br>K<br>E<br>R</span><span class="pip">★</span>':`<span class="ix">${rn(c.r)}<i>${c.s}</i></span><span class="pip">${c.s}</span>`}</${tag}>`;
+  return `<${tag} class="${cls}"${attrs}${style} aria-label="${c.r===JOKER?'Joker, shithead in morse code':rn(c.r)+' of '+suitName(c.s)}">${c.r===JOKER?JOKER_FACE:`<span class="ix">${rn(c.r)}<i>${c.s}</i></span><span class="pip">${c.s}</span>`}</${tag}>`;
 }
+// joker face: "shithead" spelt in morse code, one letter per row
+const MORSE_WORD=[['s','...'],['h','....'],['i','..'],['t','-'],['h','....'],['e','.'],['a','.-'],['d','-..']];
+const JOKER_FACE=(()=>{
+  let g='';const top=13,step=7.1,dot=1.7,dash=9,gap=2.6;
+  MORSE_WORD.forEach(([,code],row)=>{
+    const w=[...code].reduce((a,ch)=>a+(ch==='.'?dot*2:dash),0)+gap*(code.length-1);
+    let x=25-w/2;const y=top+row*step;
+    for(const ch of code){
+      if(ch==='.'){g+=`<circle cx="${(x+dot).toFixed(2)}" cy="${y.toFixed(2)}" r="${dot}"/>`;x+=dot*2+gap}
+      else{g+=`<rect x="${x.toFixed(2)}" y="${(y-dot).toFixed(2)}" width="${dash}" height="${dot*2}" rx="${dot}"/>`;x+=dash+gap}
+    }
+  });
+  return `<svg class="morse" viewBox="0 0 50 70" aria-hidden="true"><text x="5" y="9" font-size="7" font-weight="700">★</text><text x="45" y="66" font-size="7" font-weight="700" text-anchor="end">★</text><g fill="currentColor">${g}</g></svg>`;
+})();
 function backHTML(o={}){
   const tag=o.zone!=null?'button':'div';
   const attrs=o.zone!=null?` data-z="${o.zone}" data-i="${o.i}" aria-label="Face-down card ${o.i+1}"`:' aria-hidden="true"';
