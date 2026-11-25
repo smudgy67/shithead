@@ -234,7 +234,7 @@ const NAMES={11:'J',12:'Q',13:'K',14:'A',15:'★'};
 const JOKER=15;
 const rn=r=>NAMES[r]||String(r);
 const isRed=s=>s==='♥'||s==='♦';
-const CPU_NAMES=['rosAI','bobAI','dobAI'];const OLD_CPU=['Rosa','Dev','Mags','mAIm 1','mAIm 2','mAIm 3'];
+const CPU_NAMES=['mAIm','rosAI','bobAI'];const OLD_CPU=['Rosa','Dev','Mags','mAIm 1','mAIm 2','mAIm 3','dobAI'];
 let DELAY=900;
 
 let S=null;                 // game state
@@ -243,10 +243,10 @@ let pass=null;              // {pi, why} hand-over cover for pass-and-play
 let timer=null;
 let nudgeId=null;
 let seenBurn=0;
-let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'rosAI',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
+let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'rosAI',type:'cpu'},{name:'bobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
 
-function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(OLD_CPU.includes(st.name))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
+function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(st.type==='cpu'&&(OLD_CPU.includes(st.name)||CPU_NAMES.includes(st.name)))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
 function saveSetup(){try{localStorage.setItem('shithead-setup',JSON.stringify(setup))}catch(e){}}
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -281,7 +281,7 @@ function buildGame(seats,rules){
   for(const s of SUITS)for(let r=2;r<=14;r++)deck.push({r,s,id:id++});
   if(rules.jokers){deck.push({r:JOKER,s:'★',jc:'red',id:id++},{r:JOKER,s:'★',jc:'black',id:id++})}
   shuffle(deck);
-  S={players:seats.map((x,i)=>({name:(x.name||'').trim()||(x.type==='cpu'?CPU_NAMES[i-1]||'mAIm':`Player ${i+1}`),type:x.type,uid:x.uid||null,hand:[],up:[],down:[],out:false})),
+  S={players:seats.map((x,i)=>({name:(x.name||'').trim()||(x.type==='cpu'?CPU_NAMES[i-1]||'Computer':`Player ${i+1}`),type:x.type,uid:x.uid||null,hand:[],up:[],down:[],out:false})),
      deck,pile:[],burned:0,turn:0,phase:'swap',seven:rules.seven,eights:rules.eights,jacks:rules.jacks,jokers:rules.jokers,dir:1,finish:[],log:[],viewer:0,swapQ:[],flash:null,shithead:null,burnSeq:0,round:1,rev:0};
   for(const k of ['down','up','hand'])for(let i=0;i<3;i++)for(const p of S.players){const c=deck.pop();if(k!=='hand')c.slot=i;p[k].push(c)}
   S.players.forEach(p=>{if(p.type==='cpu')aiSwap(p);sortHand(p)});
@@ -621,7 +621,7 @@ function renderSetup(){
   let seats='';
   for(let k=0;k<n;k++){
     const s=setup.seats[k];
-    seats+=`<div class="seat"><span class="num">${k+1}</span><input id="seat-${k}" data-seat="${k}"${/mAIm|rosAI|bobAI|dobAI/.test(s.name)?' class="maim"':''} value="${esc(s.name)}" maxlength="14" aria-label="Seat ${k+1} name">${k===0?'<span class="chip">Person</span>':`<button class="btn ghost sm" data-act="seat-type" data-k="${k}">${s.type==='cpu'?'mAIm':'Person'}</button>`}</div>`;
+    seats+=`<div class="seat"><span class="num">${k+1}</span><input id="seat-${k}" data-seat="${k}"${/mAIm|rosAI|bobAI|dobAI/.test(s.name)?' class="maim"':''} value="${esc(s.name)}" maxlength="14" aria-label="Seat ${k+1} name">${k===0?'<span class="chip">Person</span>':`<button class="btn ghost sm" data-act="seat-type" data-k="${k}">${s.type==='cpu'?'Computer':'Person'}</button>`}</div>`;
   }
   const hum=setup.seats.slice(0,n).filter(s=>s.type==='human').length;
   const allPeople=hum===n,allCpu=hum===1,online=!!setup.online;
@@ -633,12 +633,12 @@ function renderSetup(){
     </div>
     <div class="panel">
       <div class="label">Play against</div>
-      <div class="seg" role="group" aria-label="Play against"><button data-act="mode" data-m="cpu" aria-pressed="${!online&&allCpu}">mAIm</button><button data-act="mode" data-m="people" aria-pressed="${!online&&allPeople}">Friends, one phone</button><button data-act="mode" data-m="online" aria-pressed="${online}">Online</button></div>
+      <div class="seg" role="group" aria-label="Play against"><button data-act="mode" data-m="cpu" aria-pressed="${!online&&allCpu}">Computer</button><button data-act="mode" data-m="people" aria-pressed="${!online&&allPeople}">Friends, one phone</button><button data-act="mode" data-m="online" aria-pressed="${online}">Online</button></div>
       ${online?onlinePanelHTML():`
       <div class="label">Players</div>
       <div class="seg" role="group" aria-label="Number of players">${[2,3,4].map(k=>`<button data-act="players" data-n="${k}" aria-pressed="${k===n}">${k}</button>`).join('')}</div>
       ${seats}
-      <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">${hum>1?`${hum} people will pass one device between turns. Hands are hidden until each player taps to reveal.`:'You can also mix: tap mAIm or Person beside a seat to switch it.'}</p>`}
+      <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">${hum>1?`${hum} people will pass one device between turns. Hands are hidden until each player taps to reveal.`:'You can also mix: tap Computer or Person beside a seat to switch it.'}</p>`}
     </div>
     <div class="panel">
       ${togglesHTML()}
@@ -672,7 +672,7 @@ function rulesHTML(){
 function oppHTML(i){
   const p=S.players[i];
   const place=S.finish.indexOf(i);
-  const status=p.out?`<span class="chip out">Out · ${ordinal(place+1)}</span>`:S.turn===i&&S.phase==='play'?'<span class="chip turn">Playing</span>':p.type==='cpu'?'<span class="chip cpu">mAIm</span>':'<span class="chip">Person</span>';
+  const status=p.out?`<span class="chip out">Out · ${ordinal(place+1)}</span>`:S.turn===i&&S.phase==='play'?'<span class="chip turn">Playing</span>':p.type==='cpu'?'<span class="chip cpu">Computer</span>':'<span class="chip">Person</span>';
   const fan=p.hand.slice(0,6).map(()=>backHTML()).join('');
   return `<div class="opp ${S.turn===i&&S.phase==='play'&&!p.out?'active':''}">
     <div class="opp-head"><h3>${esc(p.name)}</h3>${status}</div>
@@ -964,8 +964,8 @@ function renderLobby(){
   const cpus=g.cpus||0,total=ON.seats.length+cpus;
   const hostSeat=ON.seats.find(x=>x.uid===g.host);
   const rows=ON.seats.map(x=>`<li><span>${esc(x.name)}${x.uid===ON.uid?' (you)':''}</span>${x.uid===g.host?'<span class="chip turn">Host</span>':'<span class="chip">Joined</span>'}</li>`).join('')
-    +CPU_NAMES.slice(0,cpus).map(n=>`<li><span>${n}</span><span class="chip cpu">mAIm</span></li>`).join('');
-  const hostCtl=ON.host?`<div class="actions">${total<4?'<button class="btn ghost sm" data-act="add-cpu">Add mAIm</button>':''}${cpus?'<button class="btn ghost sm" data-act="del-cpu">Remove mAIm</button>':''}</div>`:'';
+    +CPU_NAMES.slice(0,cpus).map(n=>`<li><span>${n}</span><span class="chip cpu">Computer</span></li>`).join('');
+  const hostCtl=ON.host?`<div class="actions">${total<4?'<button class="btn ghost sm" data-act="add-cpu">Add computer</button>':''}${cpus?'<button class="btn ghost sm" data-act="del-cpu">Remove computer</button>':''}</div>`:'';
   const toggles=ON.host?`<div class="panel"><div class="label">House rules</div>${togglesHTML()}</div>`:'';
   return bar+`<div class="setup">
     <div class="panel">
@@ -1060,7 +1060,7 @@ function renderAppSettings(){
     <div class="sgroup"><b>font</b><div class="fonts">${FONTS.map(([l,f])=>`<button type="button" class="fontbtn${f===appSet.font?" on":""}" data-font="${f}" style="font-family:'${f}'">${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>text size</b><div class="srange"><span>a</span><input type="range" id="textScale" min="85" max="125" step="5" value="${appSet.scale}" aria-label="text size"><span style="font-size:1.3em">a</span><span>${appSet.scale}%</span></div></div>
     <div class="sgroup"><b>logo glow</b><div class="glows"><button type="button" class="glowtxt${appSet.glow==="rainbow"?" on":""}" data-glow="rainbow">rainbow</button>${GLOWS.map(([c,n],i)=>`<button type="button" class="glowbtn${String(appSet.glow)===String(i)?" on":""}" data-glow="${i}" style="background:${c}" aria-label="${n} glow"></button>`).join("")}<button type="button" class="glowtxt${appSet.glow==="off"?" on":""}" data-glow="off">off</button></div></div>
-    <div class="sgroup"><b>mAIm speed</b><div class="glows">${Object.keys(SPEEDS).map(k=>`<button type="button" class="pill${appSet.speed===k?" on":""}" data-speed="${k}">${k}</button>`).join("")}</div></div>
+    <div class="sgroup"><b>computer players</b><div class="glows">${Object.keys(SPEEDS).map(k=>`<button type="button" class="pill${appSet.speed===k?" on":""}" data-speed="${k}">${k}</button>`).join("")}</div></div>
     <button type="button" class="btn ghost sm" data-act="settings-reset">reset settings</button>
   </div>`;
 }
