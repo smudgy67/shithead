@@ -613,7 +613,7 @@ function renderSetup(){
 }
 
 function togglesHTML(){
-  return `<label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means lower<small>After a 7, the next player must play a 7 or lower (or a 2 or 10).</small></span></label>
+  return `<label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means 7 or lower<small>After a 7, the next player must play a 7 or lower. The magic cards (2, 8, 10 and jokers) still go on it.</small></span></label>
       <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
       <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile. 2s, 8s and 10s never go on a jack.</small></span></label>
       <label class="toggle"><input type="checkbox" id="jokers" data-act="jokers" ${setup.jokers?'checked':''}><span>Jokers<small>Two jokers in the deck. A joker is invisible, plays on anything, and with 3 or more players it reverses the direction of play.</small></span></label>`;
