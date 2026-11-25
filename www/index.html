@@ -335,12 +335,12 @@ function doPlay(pi,zone,idxs){
 function afterPlay(pi,cards){
   const p=S.players[pi];
   S.follow=null;
-  let burn=null;
+  let burn=null,again=false;
   if(cards[0].r===10)burn='A 10 burns the pile.';
-  else{const n=S.pile.length;if(n>=4){const r=S.pile[n-1].r;if(S.pile.slice(-4).every(c=>c.r===r))burn=`Four ${rn(r)}s in a row burn the pile.`}}
+  else{const n=S.pile.length;if(n>=4){const r=S.pile[n-1].r;if(S.pile.slice(-4).every(c=>c.r===r)){burn=`Four ${rn(r)}s in a row burn the pile.`;again=true}}}
   while(S.deck.length&&p.hand.length<3)p.hand.push(S.deck.pop());
   sortHand(p);
-  if(burn){S.burned+=S.pile.length;S.pile=[];S.flash='burn';S.burnSeq=(S.burnSeq||0)+1;log(burn+(p.out?'':` ${p.name} ${youVerb(p,'go','goes')} again.`))}
+  if(burn){S.burned+=S.pile.length;S.pile=[];S.flash='burn';S.burnSeq=(S.burnSeq||0)+1;log(burn+(again&&!p.out?` ${p.name} ${youVerb(p,'go','goes')} again.`:''))}
   else if(cards[0].r===2){log('A 2 resets the pile.')}
   else if(cards[0].r===JOKER){
     const active=S.players.filter(x=>!x.out).length;
@@ -356,7 +356,7 @@ function afterPlay(pi,cards){
     log(`${p.name} ${youVerb(p,'must','must')} follow the jack with a J, Q, K, A or joker.`);
     beginTurn();return;
   }
-  if(burn&&!p.out)beginTurn();else advance();
+  if(again&&!p.out)beginTurn();else advance();
 }
 function youVerb(p,a,b){return p.name==='You'?a:b}
 
@@ -624,7 +624,7 @@ function rulesHTML(){
     <li>On your turn, play a card of equal or higher rank than the top of the pile. Play several of the same rank together if you like.</li>
     <li>If you can't play, you pick up the whole pile.</li>
     <li>While the deck lasts, your hand refills to 3. After that, play your face-up cards, then your face-down cards blind. A blind card that can't go means picking up the pile.</li>
-    <li>A 2 resets the pile. A 10 burns it and you go again. Four of the same rank in a row also burns it.</li>
+    <li>A 2 resets the pile. A 10 burns it, and play passes on. Four of the same rank in a row also burns it, and then you go again.</li>
     <li>With the 7 rule on, a 7 forces the next player to play 7 or lower.</li>
     <li>With invisible 8s on, an 8 plays on anything and the next player plays on the card beneath it.</li>
     <li>Cacky jack: whoever lays a jack (or several jacks) must follow it straight away, in the same turn, with a J, Q, K, A or joker. Several of one rank are fine, such as two jacks then two queens. Following with another jack means following again. If you can't follow, you pick up the pile. 2s, 8s and 10s can never go on a jack, even with a joker on top of it.</li>
