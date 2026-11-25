@@ -79,8 +79,18 @@ body.home .title .tbox b{font-size:1.3rem}
 .card .ix i{font-style:normal;font-size:.72em}
 .card .pip{position:absolute;right:9%;bottom:5%;font-size:calc(var(--cw)*.5);line-height:1}
 .card.special::after{content:"";position:absolute;inset:3px;border-radius:calc(var(--cw)*.09);box-shadow:inset 0 0 0 1.5px currentColor;opacity:.22;pointer-events:none}
-.card.back{background:repeating-linear-gradient(135deg,var(--accent) 0 5px,var(--accent-2) 5px 7px);box-shadow:inset 0 0 0 3px var(--face),inset 0 0 0 5px var(--accent-ink),0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28)}
-.card.back::before{content:"S";position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:calc(var(--cw)*.42);color:var(--accent-ink);opacity:.8}
+.card.back{background:var(--back-bg,repeating-linear-gradient(135deg,var(--accent) 0 5px,var(--accent-2) 5px 7px));box-shadow:inset 0 0 0 3px var(--face),inset 0 0 0 5px var(--accent-ink),0 1px 0 rgba(0,0,0,.3),0 5px 12px rgba(0,0,0,.28)}
+.card.back::before{content:var(--back-mark,"S");position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:calc(var(--cw)*.42);color:var(--back-mc,var(--accent-ink));opacity:.85}
+/* card back designs, picked in app settings */
+[data-back="smudge"]{--back-bg:radial-gradient(circle,#fff 0 13%,#111 14% 19%,#e53935 20% 27%,transparent 28%),repeating-conic-gradient(#111 0 25%,#efefef 0 50%) 0 0/8px 8px;--back-mark:""}
+[data-back="red"]{--back-bg:repeating-linear-gradient(45deg,transparent 0 5px,rgba(255,255,255,.5) 5px 6px),repeating-linear-gradient(-45deg,transparent 0 5px,rgba(255,255,255,.5) 5px 6px),#b3202a;--back-mark:""}
+[data-back="blue"]{--back-bg:repeating-linear-gradient(45deg,transparent 0 5px,rgba(255,255,255,.5) 5px 6px),repeating-linear-gradient(-45deg,transparent 0 5px,rgba(255,255,255,.5) 5px 6px),#1f4fa8;--back-mark:""}
+[data-back="midnight"]{--back-bg:radial-gradient(circle at 50% 45%,#34408a,#0d1230 75%);--back-mark:"★";--back-mc:#e8c35a}
+[data-back="tartan"]{--back-bg:repeating-linear-gradient(0deg,rgba(200,30,40,.6) 0 3px,transparent 3px 11px),repeating-linear-gradient(90deg,rgba(200,30,40,.6) 0 3px,transparent 3px 11px),repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 5px),#1f5d3a;--back-mark:""}
+[data-back="poo"]{--back-bg:radial-gradient(circle at 50% 50%,#8a5a2b,#4a2e14 80%);--back-mark:"💩"}
+.backs{display:flex;flex-wrap:wrap;gap:10px}
+.backbtn{--cw:38px;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:2px solid transparent;border-radius:10px;padding:4px;cursor:pointer;font:inherit;font-size:.75rem;color:var(--ink)}
+.backbtn.on{border-color:var(--accent)}
 .card.ok{cursor:pointer}
 .card.ok:hover{transform:translateY(-5px)}
 .card.sel{transform:translateY(-14px)!important;box-shadow:0 0 0 3px var(--accent),0 10px 18px rgba(0,0,0,.4)}
@@ -1036,7 +1046,8 @@ const FONTS=[["space grotesk","Space Grotesk"],["playfair display","Playfair Dis
 const GLOWS=[["#e53935","red"],["#f08a24","orange"],["#f2d21b","yellow"],["#3cc84a","green"],["#2f7fe0","blue"],["#4b3fd0","indigo"],["#9b4ddb","violet"]];
 const SPEEDS={slow:1500,normal:900,fast:450};
 const SET_KEY="shithead-settings-v1";
-const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal"};
+const BACKS=[["stripes","stripes"],["smudge","smudgenet"],["red","classic red"],["blue","classic blue"],["midnight","midnight"],["tartan","tartan"],["poo","poo"]];
+const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal",back:"stripes"};
 let appSet={...DEFAULT_SETTINGS};
 try{Object.assign(appSet,JSON.parse(localStorage.getItem(SET_KEY)||"{}"))}catch(e){}
 const saveAppSet=()=>{try{localStorage.setItem(SET_KEY,JSON.stringify(appSet))}catch(e){}};
@@ -1108,6 +1119,7 @@ function applyAppSettings(){
   r.setProperty("color-scheme",th.dark?"dark":"light");
   const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=th.bg;
   DELAY=SPEEDS[appSet.speed]||900;
+  document.documentElement.dataset.back=appSet.back||"stripes";
   logoAnim.set(appSet.glow);
 }
 function renderAppSettings(){
@@ -1118,6 +1130,7 @@ function renderAppSettings(){
     <div class="sgroup"><b>font</b><div class="fonts">${FONTS.map(([l,f])=>`<button type="button" class="fontbtn${f===appSet.font?" on":""}" data-font="${f}" style="font-family:'${f}'">${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>text size</b><div class="srange"><span>a</span><input type="range" id="textScale" min="85" max="125" step="5" value="${appSet.scale}" aria-label="text size"><span style="font-size:1.3em">a</span><span>${appSet.scale}%</span></div></div>
     <div class="sgroup"><b>logo glow</b><div class="glows"><button type="button" class="glowtxt${appSet.glow==="rainbow"?" on":""}" data-glow="rainbow">rainbow</button>${GLOWS.map(([c,n],i)=>`<button type="button" class="glowbtn${String(appSet.glow)===String(i)?" on":""}" data-glow="${i}" style="background:${c}" aria-label="${n} glow"></button>`).join("")}<button type="button" class="glowtxt${appSet.glow==="off"?" on":""}" data-glow="off">off</button></div></div>
+    <div class="sgroup"><b>card backs</b><div class="backs">${BACKS.map(([id,l])=>`<button type="button" class="backbtn${(appSet.back||"stripes")===id?" on":""}" data-back="${id}" aria-label="${l} card back"><div class="card back" aria-hidden="true"></div>${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>computer players</b><div class="glows">${Object.keys(SPEEDS).map(k=>`<button type="button" class="pill${appSet.speed===k?" on":""}" data-speed="${k}">${k}</button>`).join("")}</div></div>
     <button type="button" class="btn ghost sm" data-act="settings-reset">reset settings</button>
   </div>`;
@@ -1130,6 +1143,7 @@ document.getElementById("settingsSheet").addEventListener("click",e=>{
   else if(b.dataset.font)setApp("font",b.dataset.font);
   else if(b.dataset.glow)setApp("glow",b.dataset.glow==="rainbow"||b.dataset.glow==="off"?b.dataset.glow:+b.dataset.glow);
   else if(b.dataset.speed)setApp("speed",b.dataset.speed);
+  else if(b.dataset.back)setApp("back",b.dataset.back);
   else if(b.dataset.act==="settings-close")document.getElementById("settingsSheet").hidden=true;
   else if(b.dataset.act==="settings-reset"){appSet={...DEFAULT_SETTINGS};saveAppSet();applyAppSettings();renderAppSettings()}
 });

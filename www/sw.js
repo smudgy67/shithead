@@ -1,5 +1,5 @@
 // Offline support: cache the game shell, and cache fonts the first time they load.
-const CACHE = 'shithead-v14';
+const CACHE = 'shithead-v15';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
