@@ -234,7 +234,7 @@ const NAMES={11:'J',12:'Q',13:'K',14:'A',15:'★'};
 const JOKER=15;
 const rn=r=>NAMES[r]||String(r);
 const isRed=s=>s==='♥'||s==='♦';
-const CPU_NAMES=['mAIm 1','mAIm 2','mAIm 3'];const OLD_CPU=['Rosa','Dev','Mags'];
+const CPU_NAMES=['rosAI','bobAI','dobAI'];const OLD_CPU=['Rosa','Dev','Mags','mAIm 1','mAIm 2','mAIm 3'];
 let DELAY=900;
 
 let S=null;                 // game state
@@ -243,7 +243,7 @@ let pass=null;              // {pi, why} hand-over cover for pass-and-play
 let timer=null;
 let nudgeId=null;
 let seenBurn=0;
-let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'mAIm 1',type:'cpu'},{name:'mAIm 2',type:'cpu'},{name:'mAIm 3',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
+let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'rosAI',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
 
 function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(OLD_CPU.includes(st.name))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
@@ -621,7 +621,7 @@ function renderSetup(){
   let seats='';
   for(let k=0;k<n;k++){
     const s=setup.seats[k];
-    seats+=`<div class="seat"><span class="num">${k+1}</span><input id="seat-${k}" data-seat="${k}"${/mAIm/.test(s.name)?' class="maim"':''} value="${esc(s.name)}" maxlength="14" aria-label="Seat ${k+1} name">${k===0?'<span class="chip">Person</span>':`<button class="btn ghost sm" data-act="seat-type" data-k="${k}">${s.type==='cpu'?'mAIm':'Person'}</button>`}</div>`;
+    seats+=`<div class="seat"><span class="num">${k+1}</span><input id="seat-${k}" data-seat="${k}"${/mAIm|rosAI|bobAI|dobAI/.test(s.name)?' class="maim"':''} value="${esc(s.name)}" maxlength="14" aria-label="Seat ${k+1} name">${k===0?'<span class="chip">Person</span>':`<button class="btn ghost sm" data-act="seat-type" data-k="${k}">${s.type==='cpu'?'mAIm':'Person'}</button>`}</div>`;
   }
   const hum=setup.seats.slice(0,n).filter(s=>s.type==='human').length;
   const allPeople=hum===n,allCpu=hum===1,online=!!setup.online;
@@ -765,8 +765,8 @@ function renderGame(){
 let topActions='';
 function keepMaim(root){
   const w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT),hits=[];
-  while(w.nextNode()){const n=w.currentNode;if(n.nodeValue.includes('mAIm')&&!n.parentNode.closest('.maim,script,style,textarea'))hits.push(n)}
-  hits.forEach(n=>{const f=document.createDocumentFragment();n.nodeValue.split(/(mAIm)/).forEach(t=>{if(!t)return;if(t==='mAIm'){const sp=document.createElement('span');sp.className='maim';sp.textContent=t;f.appendChild(sp)}else f.appendChild(document.createTextNode(t))});n.parentNode.replaceChild(f,n)});
+  while(w.nextNode()){const n=w.currentNode;if(/mAIm|rosAI|bobAI|dobAI/.test(n.nodeValue)&&!n.parentNode.closest('.maim,script,style,textarea'))hits.push(n)}
+  hits.forEach(n=>{const f=document.createDocumentFragment();n.nodeValue.split(/(mAIm|rosAI|bobAI|dobAI)/).forEach(t=>{if(!t)return;if(/^(mAIm|rosAI|bobAI|dobAI)$/.test(t)){const sp=document.createElement('span');sp.className='maim';sp.textContent=t;f.appendChild(sp)}else f.appendChild(document.createTextNode(t))});n.parentNode.replaceChild(f,n)});
 }
 new MutationObserver(()=>keepMaim()).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 function render(){
