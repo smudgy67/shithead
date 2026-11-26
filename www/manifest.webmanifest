@@ -1,6 +1,6 @@
 {
-  "name": "shithead",
-  "short_name": "shithead",
+  "name": "smudgenet-shithead",
+  "short_name": "smudgenet-shithead",
   "description": "The shedding card game for 2 to 4 players.",
   "start_url": "./",
   "scope": "./",

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">shithead</string>
-    <string name="title_activity_main">shithead</string>
+    <string name="app_name">smudgenet-shithead</string>
+    <string name="title_activity_main">smudgenet-shithead</string>
     <string name="package_name">com.example.shithead</string>
     <string name="custom_url_scheme">com.example.shithead</string>
 </resources>
