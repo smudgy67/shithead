@@ -861,7 +861,8 @@ function renderGame(){
   const meStatus=me.out?`<span class="chip out">Out · ${ordinal(S.finish.indexOf(v)+1)}</span>`:myTurn?'<span class="chip turn">Your turn</span>':'';
   const deckTop=S.deck.length?backHTML()+(S.deck.length>1?backHTML():''):'<div class="placeholder"></div>';
 
-  topActions=ON?`<span class="chip">Game ${ON.code}</span><button class="btn ghost sm" data-act="leave">Leave</button>`:(canStepBack()?'<button class="btn ghost sm" data-act="undo" title="Undo your last turn (Ctrl+Z)">↶ step back</button>':'')+'<button class="btn ghost sm" data-act="menu">New game</button>';
+  topActions=ON?`<span class="chip">Game ${ON.code}</span><button class="btn ghost sm" data-act="leave">Leave</button>`:'<button class="btn ghost sm" data-act="menu">New game</button>';
+  const undoBtn=appSet.undo!=='off'&&canStepBack()?'<button class="btn ghost" data-act="undo" title="Undo your last turn (Ctrl+Z)">↶ Step back</button>':'';
   let html=`
   ${onlineMsg?`<div class="note warn">${esc(onlineMsg)}</div>`:''}
   <section class="opps" aria-label="Opponents">${order.map(oppHTML).join('')}</section>
@@ -878,7 +879,7 @@ function renderGame(){
       <div class="zone"><span class="label">Table</span>${slotsHTML(me,true,myTurn?z:null)}</div>
       <div class="zone" style="flex:1"><span class="label">Hand · ${me.hand.length}</span><div class="hand ${me.hand.length>12?'tight':''}">${hand||'<div class="placeholder"></div>'}</div></div>
     </div>
-    <div class="actions">${actions}</div>
+    <div class="actions">${actions}${undoBtn}</div>
   </section>
   ${ON&&S.viewer>=0?`<div class="emotes" role="group" aria-label="Send a reaction">${emotes().map(e=>`<button class="emote" data-act="emote" data-e="${e}" aria-label="Send ${e}">${e}</button>`).join('')}</div>`:''}
   ${rulesHTML()}`;
@@ -1293,7 +1294,7 @@ const GLOWS=[["#e53935","red"],["#f08a24","orange"],["#f2d21b","yellow"],["#3cc8
 const SPEEDS={slow:1500,normal:900,fast:450};
 const SET_KEY="shithead-settings-v1";
 const BACKS=[["stripes","stripes"],["smudge","smudgenet"],["red","classic red"],["blue","classic blue"],["midnight","midnight"],["tartan","tartan"],["poo","poo"]];
-const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal",back:"stripes",sound:"on",buzz:"on",debug:"off"};
+const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal",back:"stripes",sound:"on",buzz:"on",debug:"off",undo:"on"};
 let appSet={...DEFAULT_SETTINGS};
 try{Object.assign(appSet,JSON.parse(localStorage.getItem(SET_KEY)||"{}"))}catch(e){}
 const saveAppSet=()=>{try{localStorage.setItem(SET_KEY,JSON.stringify(appSet))}catch(e){}};
@@ -1380,6 +1381,7 @@ function renderAppSettings(){
     <div class="sgroup"><b>sound and buzz</b><div class="glows">${["on","off"].map(k=>`<button type="button" class="pill${(appSet.sound||"on")===k?" on":""}" data-sound="${k}">sound ${k}</button>`).join("")}${["on","off"].map(k=>`<button type="button" class="pill${(appSet.buzz||"on")===k?" on":""}" data-buzz="${k}">buzz ${k}</button>`).join("")}</div></div>
     <div class="sgroup"><b>card backs</b><div class="backs">${BACKS.map(([id,l])=>`<button type="button" class="backbtn${(appSet.back||"stripes")===id?" on":""}" data-back="${id}" aria-label="${l} card back"><div class="card back" aria-hidden="true"></div>${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>computer players</b><div class="glows">${Object.keys(SPEEDS).map(k=>`<button type="button" class="pill${appSet.speed===k?" on":""}" data-speed="${k}">${k}</button>`).join("")}</div></div>
+    <div class="sgroup"><b>step back button</b><div class="glows">${["on","off"].map(k=>`<button type="button" class="pill${(appSet.undo||"on")===k?" on":""}" data-undo="${k}">${k}</button>`).join("")}</div></div>
     <div class="sgroup"><b>debug</b><div class="glows">${["off","on"].map(k=>`<button type="button" class="pill${(appSet.debug||"off")===k?" on":""}" data-debug="${k}">open cards ${k}</button>`).join("")}</div><p class="sdesc">shows every hand and face-down card, for testing. not in online games.</p></div>
     <button type="button" class="btn ghost sm" data-act="settings-reset">reset settings</button>
   </div>`;
@@ -1394,6 +1396,7 @@ document.getElementById("settingsSheet").addEventListener("click",e=>{
   else if(b.dataset.speed)setApp("speed",b.dataset.speed);
   else if(b.dataset.back)setApp("back",b.dataset.back);
   else if(b.dataset.debug){setApp("debug",b.dataset.debug);render()}
+  else if(b.dataset.undo){setApp("undo",b.dataset.undo);render()}
   else if(b.dataset.sound){setApp("sound",b.dataset.sound);if(b.dataset.sound==="on")sfx("ding")}
   else if(b.dataset.buzz){setApp("buzz",b.dataset.buzz);if(b.dataset.buzz==="on")buzz(80)}
   else if(b.dataset.act==="settings-close")document.getElementById("settingsSheet").hidden=true;
