@@ -427,10 +427,10 @@ function doPlay(pi,zone,idxs){
   const cards=[...idxs].sort((a,b)=>b-a).map(i=>p[zone].splice(i,1)[0]);
   S.pile.push(...cards);fx('play',{pi,n:cards.length});
   log(`${p.name} played ${describe(cards)}${zone==='up'?' from the table':''}.`);
-  afterPlay(pi,cards);
+  afterPlay(pi,cards,zone);
 }
 
-function afterPlay(pi,cards){
+function afterPlay(pi,cards,zone){
   const p=S.players[pi];
   S.follow=null;
   let burn=null,again=false;
@@ -448,8 +448,10 @@ function afterPlay(pi,cards){
   else if(cards[0].r===8&&S.eights){log('The 8 is invisible.')}
   checkOut(pi);
   if(endCheck())return;
-  if(!burn&&S.jacks&&cards[0].r===11&&p.out){S.follow='next'}
-  if(!burn&&S.jacks&&cards[0].r===11&&!p.out){
+  // jacks that were your last cards (nothing left in that hand or row) need no follow-up: the next player plays on the jack
+  const lastCards=p.out||(zone&&!p[zone].length);
+  if(!burn&&S.jacks&&cards[0].r===11&&lastCards){S.follow='next';log(`Those were ${p.name==='You'?'your':p.name+"'s"} last cards, so no follow-up is needed. Next player: J, Q, K, A or joker.`)}
+  if(!burn&&S.jacks&&cards[0].r===11&&!lastCards){
     S.follow=pi;
     log(`${p.name} ${youVerb(p,'must','must')} follow the jack with a J, Q, K, A or joker.`);
     beginTurn();return;
@@ -487,7 +489,7 @@ function flip(pi,idx){
   const p=S.players[pi];
   const c=p.down.splice(idx,1)[0];
   if(canPlay(c.r)){
-    S.pile.push(c);fx('play',{pi,n:1});log(`${p.name} flipped ${cardName(c)} blind and it plays.`);afterPlay(pi,[c]);
+    S.pile.push(c);fx('play',{pi,n:1});log(`${p.name} flipped ${cardName(c)} blind and it plays.`);afterPlay(pi,[c],'down');
   }else{
     S.pile.push(c);const n=S.pile.length;fx('pickup',{pi,n});
     p.hand.push(...S.pile);S.pile=[];sortHand(p);
@@ -519,7 +521,7 @@ function aiChoice(pi,level,calm){
   const ranks=[...new Set(cards.filter(c=>canPlay(c.r)).map(c=>c.r))];
   if(!ranks.length)return{kind:'pickup'};
   // a jack has to be followed straight away, so only lay one when a follow-up is in the same cards
-  const canFollowJack=cards.some(c=>c.r>=12);
+  const canFollowJack=cards.some(c=>c.r>=12)||cards.every(c=>c.r===11); // jacks as your last cards need no follow-up
   let normal=ranks.filter(r=>!wild(r)).sort((a,b)=>a-b);
   if(S.jacks&&!canFollowJack&&normal.includes(11)&&ranks.length>1)normal=normal.filter(r=>r!==11);
   if(S.jacks&&S.follow===pi&&normal.some(r=>r!==11))normal=normal.filter(r=>r!==11);
@@ -757,7 +759,7 @@ function togglesHTML(){
   return `<div class="label ctr">Computer level</div><div class="seg ctr" role="group" aria-label="Computer level">${['easy','normal','nasty'].map(k=>`<button data-act="level" data-l="${k}" aria-pressed="${k===lv}">${k}</button>`).join('')}</div>
       <label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means 7 or lower<small>After a 7, the next player must play a 7 or lower. The magic cards (2, 8, 10 and jokers) still go on it.</small></span></label>
       <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
-      <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile. 2s, 8s and 10s never go on a jack.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile, unless the jacks were their last cards. 2s, 8s and 10s never go on a jack.</small></span></label>
       <label class="toggle"><input type="checkbox" id="jokers" data-act="jokers" ${setup.jokers?'checked':''}><span>Jokers<small>Two jokers in the deck. A joker is invisible, plays on anything, and with 3 or more players it reverses the direction of play.</small></span></label>`;
 }
 function rulesHTML(){
@@ -769,7 +771,7 @@ function rulesHTML(){
     <li>A 2 resets the pile. A 10 burns it, and play passes on. Four of the same rank in a row also burns it, and then you go again.</li>
     <li>With the 7 rule on, a 7 forces the next player to play 7 or lower.</li>
     <li>With invisible 8s on, an 8 plays on anything and the next player plays on the card beneath it.</li>
-    <li>Cacky jack: whoever lays a jack (or several jacks) must follow it straight away, in the same turn, with a J, Q, K, A or joker. Several of one rank are fine, such as two jacks then two queens. Following with another jack means following again. If you can't follow, you pick up the pile. 2s, 8s and 10s can never go on a jack, even with a joker on top of it.</li>
+    <li>Cacky jack: whoever lays a jack (or several jacks) must follow it straight away, in the same turn, with a J, Q, K, A or joker. Several of one rank are fine, such as two jacks then two queens. Following with another jack means following again. If you can't follow, you pick up the pile. The exception: jacks that are your last cards can be laid whenever they're allowed, with no follow-up, and the next player plays on the jack. 2s, 8s and 10s can never go on a jack, even with a joker on top of it.</li>
     <li>With jokers on, a joker is see-through like an 8: it plays on anything and the next player plays against the card beneath it. A joker can follow a jack, but the jack still shows through, so the next player must also play a J, Q, K, A or joker. With 3 or more players left it also reverses the direction of play.</li>
     <li>The last player still holding cards is the shithead.</li>
   </ul><p style="margin:8px 0 0">On a computer: double-click a card to play it, Enter plays your selection, P picks up the pile, Esc clears your selection.</p></details>`;
