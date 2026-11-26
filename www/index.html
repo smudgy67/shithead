@@ -38,6 +38,33 @@
   body:not(.home) .title .tbox{display:none}
   #app{padding-top:4px}
 }
+/* phone held sideways: opponents and pile on the left, your cards on the right */
+@media (orientation:landscape) and (max-height:520px){
+  body:not(.home) #top{padding-top:4px}
+  body:not(.home) .title{width:36px}
+  body:not(.home) .title .tbox{display:none}
+  body:not(.home) #app{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);column-gap:12px;row-gap:6px;align-items:start;max-width:none;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+  body:not(.home) #app>*{grid-column:1}
+  body:not(.home) #app>section.me{grid-column:2;grid-row:1 / span 5}
+  body:not(.home) #app>details.rules,body:not(.home) #app>.emotes{grid-column:1 / -1}
+  .opps{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}
+  .opp{--cw:22px;padding:5px 8px;gap:4px;border-radius:12px}
+  .opp .zone>.label{display:none}
+  .opp-head h3{font-size:13px}
+  .centre{grid-template-columns:auto auto 1fr!important;gap:8px;padding:0}
+  .centre .need-col{grid-column:auto!important;order:0!important}
+  .stack{--cw:36px}
+  .pilewrap{--cw:46px;gap:2px}
+  .pile{width:calc(var(--cw)*1.7)}
+  .need{font-size:13px}.need small{font-size:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .log{min-height:0;padding:3px 2px;font-size:11px}
+  .log div:not(:last-child){display:none}
+  .me{--cw:clamp(36px,5.8vw,46px);padding:6px 10px;gap:4px}
+  .me .prompt{font-size:12px}
+  .me .zone>.label{font-size:10px}
+  .me .hand{padding-top:4px;min-height:calc(var(--cw)*1.4 + 4px)}
+  .me .actions .btn{padding:7px 14px;font-size:14px}
+}
 </style>
 <title>shithead</title>
 
@@ -144,7 +171,7 @@ body.home .title .tbox b{font-size:1.3rem}
 .shtable td{padding:6px;text-align:right;border-top:1px solid var(--line)}
 .shtable th:first-child,.shtable td:first-child{text-align:left}
 @media (prefers-reduced-motion:reduce){.bubble{animation:none}}
-.banner{position:fixed;left:50%;top:38%;z-index:45;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(26px,8vw,44px);color:var(--accent-ink);background:var(--accent);padding:10px 22px;border-radius:999px;box-shadow:0 12px 40px rgba(0,0,0,.35);white-space:nowrap;pointer-events:none;animation:bannerPop 1.3s cubic-bezier(.2,1.4,.4,1) both;text-transform:none}
+.banner{position:fixed;left:50%;top:38%;z-index:45;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(26px,8vw,44px);color:var(--accent-ink);background:var(--accent);padding:10px 22px;border-radius:999px;box-shadow:0 12px 40px rgba(0,0,0,.35);white-space:nowrap;pointer-events:none;animation:bannerPop 1.3s cubic-bezier(.2,1.4,.4,1) both}
 .banner.burn{background:#e8531f;color:#fff}
 .banner.jack{background:var(--ink);color:var(--bg)}
 .banner.still{animation:bannerFade 1.3s linear both}
@@ -229,7 +256,7 @@ body:not(.home) .title .tbox span{font-size:.45rem}
 @keyframes burn{0%{filter:none}30%{filter:drop-shadow(0 0 22px var(--accent)) brightness(1.4)}100%{filter:none}}
 .need{font-family:var(--display);font-weight:700;font-size:16px;text-align:center}
 .need small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
-.flash{font-family:var(--display);font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.14em;text-transform:uppercase;min-height:1.2em}
+.flash{font-family:var(--display);font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.14em;text-transform:lowercase;min-height:1.2em}
 
 .log{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted);min-height:3.6em;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 2px}
 .log div:last-child{color:var(--ink)}
@@ -294,8 +321,8 @@ body:not(.home) .title .tbox span{font-size:.45rem}
 .note.warn{color:var(--bad)}
 .joinrow{display:flex;gap:8px;flex-wrap:wrap}
 .panel input.text{min-width:0;flex:1;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit}
-#ocode{letter-spacing:.3em;font-family:var(--display);font-weight:800;text-transform:uppercase;max-width:9em}
-.bigcode{text-transform:uppercase;font-family:var(--display);font-weight:800;font-size:clamp(48px,16vw,72px);letter-spacing:.12em;color:var(--accent);line-height:1}
+#ocode{letter-spacing:.3em;font-family:var(--display);font-weight:800;text-transform:lowercase;max-width:9em}
+.bigcode{text-transform:lowercase;font-family:var(--display);font-weight:800;font-size:clamp(48px,16vw,72px);letter-spacing:.12em;color:var(--accent);line-height:1}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .plist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--ink) 5%,transparent)}
 .toggle{display:flex;gap:10px;align-items:flex-start;cursor:pointer;line-height:1.4}
@@ -340,7 +367,7 @@ details.rules ul{padding-left:1.2em;margin:8px auto 0;max-width:65ch}
 .theme .dots{display:flex;gap:4px;margin-bottom:6px}
 .theme .dots i{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 .fonts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.fontbtn{font-size:1rem;padding:10px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;text-transform:none}
+.fontbtn{font-size:1rem;padding:10px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer;text-transform:lowercase}
 .fontbtn.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
 .glows{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .glowbtn{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer}
@@ -880,7 +907,7 @@ function setRuleset(rs){
 function togglesHTML(){
   const lv=setup.level||'normal';
   const rs=setup.ruleset||'custom',locked=rs==='classic'?'disabled':'';
-  const pre=`<button data-act="ruleset" data-r="classic" aria-pressed="${rs==='classic'}">Classic</button><button data-act="ruleset" data-r="ultra" disabled title="Coming soon" class="soon">Ultra <small>soon</small></button><button data-act="ruleset" data-r="custom" aria-pressed="${rs==='custom'}">Custom</button>`;
+  const pre=`<button data-act="ruleset" data-r="classic" aria-pressed="${rs==='classic'}">Classic</button><button data-act="ruleset" data-r="custom" aria-pressed="${rs==='custom'}">Custom</button><button data-act="ruleset" data-r="ultra" disabled title="Coming soon" class="soon">Ultra <small>soon</small></button>`;
   return `<div class="label ctr">Rules</div><div class="seg ctr" role="group" aria-label="Rule set">${pre}</div>
       <p class="note ctrnote">${rs==='classic'?'Classic Shithead: 2 resets, 10 burns, 7 means 7 or lower. Pick Custom to change the rules.':'Your own rules. Switch them on or off below.'}</p>
       <div class="label ctr">Computer level</div><div class="seg ctr" role="group" aria-label="Computer level">${['easy','normal','hard'].map(k=>`<button data-act="level" data-l="${k}" aria-pressed="${k===lv}">${k}</button>`).join('')}</div>
@@ -1022,7 +1049,7 @@ function render(){
   if(S&&document.querySelector('.centre'))try{processFx()}catch(e){}
   if(ON)try{showEmotes()}catch(e){}
   document.body.classList.toggle('home',!S&&!ON);
-  if(ON&&S&&S.phase==='play')document.title=S.turn===S.viewer?'Your turn · Shithead':'Shithead';
+  if(ON&&S&&S.phase==='play')document.title=S.turn===S.viewer?'your turn · shithead':'shithead';
 }
 
 
@@ -1208,10 +1235,10 @@ function onlinePanelHTML(){
   if(onlineApi.canWrite===false)return '<p class="note">You can look at this game but not play online. Ask the person who shared it to invite you as an Editor.</p>';
   const code=savedCode();
   return `<div class="label">Your name</div>
-    <input class="text" id="oname" value="${esc(myName())}" maxlength="14" placeholder="Name shown to other players" autocomplete="nickname">
+    <input class="text" id="oname" value="${esc(myName())}" maxlength="14" placeholder="name shown to other players" autocomplete="nickname">
     <div class="actions"><button class="btn" data-act="create">Create a game</button></div>
     <div class="label">Or join a friend's game</div>
-    <div class="joinrow"><input class="text" id="ocode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Game code"><button class="btn ghost" data-act="join">Join</button>${code?`<button class="btn ghost" data-act="rejoin">Rejoin ${esc(code)}</button>`:''}</div>
+    <div class="joinrow"><input class="text" id="ocode" maxlength="4" placeholder="code" autocomplete="off" autocapitalize="characters" aria-label="Game code"><button class="btn ghost" data-act="join">Join</button>${code?`<button class="btn ghost" data-act="rejoin">Rejoin ${esc(code)}</button>`:''}</div>
     ${onlineMsg?`<p class="note warn">${esc(onlineMsg)}</p>`:''}
     <p class="note">Each friend opens this same game link on their own phone, picks Online and types your code. They need a Claude account, and you need to share the game with them as an Editor from the Share menu.</p>`;
 }
@@ -1272,7 +1299,7 @@ function leaveOnline(){
   const o=ON;ON=null;
   o.unsubGame&&o.unsubGame();o.unsubSeats&&o.unsubSeats();
   if(o.game&&o.game.status==='lobby')onlineApi.db.doc(`games/${o.code}/seats/${o.uid}`).delete().catch(()=>{});
-  saveCode('');clearTimeout(timer);timer=null;S=null;pass=null;onlineMsg='';document.title='Shithead';
+  saveCode('');clearTimeout(timer);timer=null;S=null;pass=null;onlineMsg='';document.title='shithead';
   render();
 }
 
