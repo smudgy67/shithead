@@ -110,6 +110,29 @@ body.home .title .tbox b{font-size:1.3rem}
 .shtable td{padding:6px;text-align:right;border-top:1px solid var(--line)}
 .shtable th:first-child,.shtable td:first-child{text-align:left}
 @media (prefers-reduced-motion:reduce){.bubble{animation:none}}
+/* your turn box: table cards centred, hand centred underneath; tighter layout so buttons sit clear of the phone's home bar */
+.me{gap:8px;padding:10px 12px}
+.me-row{flex-direction:column;align-items:center;gap:8px}
+.me .zone{align-items:center;width:100%}
+.me .zone[style]{flex:none!important}
+.me .hand{justify-content:center;padding-top:8px;min-height:calc(var(--cw)*1.4 + 8px)}
+.me .hand.tight{padding-right:calc(var(--cw)*.3)}
+.me .prompt{text-align:center;font-size:14px}
+.me .actions{justify-content:center}
+.me-head h2{font-size:18px}
+#app{gap:10px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.centre{padding:4px;gap:10px}
+.opp{padding:8px 10px;gap:6px}
+.log{min-height:0;padding:6px 2px;font-size:12px}
+.log div:not(:nth-last-child(-n+2)){display:none}
+body:not(.home) .title{width:60px}
+body:not(.home) .title .tbox{padding:3px 2px}
+body:not(.home) .title .tbox b{font-size:.72rem}
+body:not(.home) .title .tbox span{font-size:.45rem}
+.opp .zone>.label{display:none}
+.opp-body{gap:10px}
+.opp-head h3{font-size:15px}
+@media (max-width:600px){:root{--cw:clamp(42px,12vw,64px)}.pilewrap{--cw:clamp(54px,15vw,84px)}.stack{--cw:clamp(44px,12vw,64px)}}
 .backbtn{--cw:38px;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:2px solid transparent;border-radius:10px;padding:4px;cursor:pointer;font:inherit;font-size:.75rem;color:var(--ink)}
 .backbtn.on{border-color:var(--accent)}
 .card.ok{cursor:pointer}
