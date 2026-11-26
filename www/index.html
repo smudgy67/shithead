@@ -8,7 +8,37 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}/* phone layout: keep a game on one screen (must come last to win) */
+@media (max-width:600px){
+  .centre{grid-template-columns:auto auto 1fr!important;gap:8px;padding:2px 0}
+  .centre .need-col{grid-column:auto!important;order:0!important}
+  .stack{--cw:40px}
+  .pilewrap{--cw:54px;gap:4px}
+  .pile{width:calc(var(--cw)*1.7)}
+  .need{font-size:14px}.need small{font-size:11px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .me .prompt{font-size:13px}
+  .opps{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+  .opp{--cw:24px;padding:6px 8px;border-radius:12px}
+  .opp-head h3{font-size:13px}
+  .opp-head .chip{font-size:10px;padding:1px 6px}
+  .opp-body{gap:6px}
+  .opp .slots{gap:3px}
+  .me{--cw:clamp(42px,13vw,56px)}
+  .me .zone>.label{font-size:10px}
+  .me .hand{padding-top:4px;min-height:calc(var(--cw)*1.4 + 4px)}
+  .log div:not(:last-child){display:none}
+  .log{padding:4px 2px;min-height:0}
+  .me-head{margin-bottom:-4px}
+  .flash{min-height:0}
+  .opp{--cw:28px}
+  .opp-body{flex-wrap:nowrap}
+  .fan .card{margin-left:calc(var(--cw)*-.7)}
+  body:not(.home) #top{padding-top:6px}
+  body:not(.home) .title{width:48px}
+  body:not(.home) .title .tbox{display:none}
+  #app{padding-top:4px}
+}
+</style>
 <title>shithead</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -110,6 +140,22 @@ body.home .title .tbox b{font-size:1.3rem}
 .shtable td{padding:6px;text-align:right;border-top:1px solid var(--line)}
 .shtable th:first-child,.shtable td:first-child{text-align:left}
 @media (prefers-reduced-motion:reduce){.bubble{animation:none}}
+.banner{position:fixed;left:50%;top:38%;z-index:45;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(26px,8vw,44px);color:var(--accent-ink);background:var(--accent);padding:10px 22px;border-radius:999px;box-shadow:0 12px 40px rgba(0,0,0,.35);white-space:nowrap;pointer-events:none;animation:bannerPop 1.3s cubic-bezier(.2,1.4,.4,1) both;text-transform:none}
+.banner.burn{background:#e8531f;color:#fff}
+.banner.jack{background:var(--ink);color:var(--bg)}
+.banner.still{animation:bannerFade 1.3s linear both}
+@keyframes bannerPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-6deg)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.08) rotate(2deg)}35%,80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(.95)}}
+@keyframes bannerFade{0%,85%{opacity:1}100%{opacity:0}}
+.pile .card.land{animation:land .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes land{from{opacity:.3;scale:1.35;translate:0 -30px}}
+.noanim .pile .card.land,.noanim .pile.burn,.noanim .card{animation:none!important}
+.loser-art{font-size:72px;line-height:1;text-align:center;animation:poo 1.6s ease-in-out infinite}
+.loser-art.win{animation:none}
+@keyframes poo{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-10px) rotate(6deg)}}
+.noanim .loser-art{animation:none}
+.roast{margin:0;font-weight:700;text-align:center}
+.cover-box.lost{box-shadow:0 20px 60px rgba(0,0,0,.35),inset 0 0 0 3px #8a5a2b}
+
 /* your turn box: table cards centred, hand centred underneath; tighter layout so buttons sit clear of the phone's home bar */
 .me{gap:8px;padding:10px 12px}
 .me-row{flex-direction:column;align-items:center;gap:8px}
@@ -328,6 +374,7 @@ let nudgeId=null;
 let seenBurn=0;
 let setup=loadSetup()||{v:2,count:2,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
+if(setup.level==='nasty')setup.level='hard';
 if(!setup.v){setup.v=2;setup.count=2} // the default became 2 players; switch saved setups over once, then keep the player's choice
 
 function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(st.type==='cpu'&&(OLD_CPU.includes(st.name)||CPU_NAMES.includes(st.name)))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
@@ -449,7 +496,7 @@ function advance(){
 function doPlay(pi,zone,idxs){
   const p=S.players[pi];
   const cards=[...idxs].sort((a,b)=>b-a).map(i=>p[zone].splice(i,1)[0]);
-  S.pile.push(...cards);fx('play',{pi,n:cards.length});
+  S.pile.push(...cards);fx('play',{pi,n:cards.length,r:cards[0].r});forget(pi,cards);
   log(`${p.name} played ${describe(cards)}${zone==='up'?' from the table':''}.`);
   afterPlay(pi,cards,zone);
 }
@@ -462,7 +509,7 @@ function afterPlay(pi,cards,zone){
   else{const n=S.pile.length;if(n>=4){const r=S.pile[n-1].r;if(S.pile.slice(-4).every(c=>c.r===r)){burn=`Four ${rn(r)}s in a row burn the pile.`;again=true}}}
   while(S.deck.length&&p.hand.length<3)p.hand.push(S.deck.pop());
   sortHand(p);
-  if(burn){S.burned+=S.pile.length;S.pile=[];S.flash='burn';S.burnSeq=(S.burnSeq||0)+1;fx('burn',{pi});log(burn+(again&&!p.out?` ${p.name} ${youVerb(p,'go','goes')} again.`:''))}
+  if(burn){S.burned+=S.pile.length;S.gone=(S.gone||[]).concat(S.pile.map(c=>c.id));S.pile=[];S.flash='burn';S.burnSeq=(S.burnSeq||0)+1;fx('burn',{pi});log(burn+(again&&!p.out?` ${p.name} ${youVerb(p,'go','goes')} again.`:''))}
   else if(cards[0].r===2){log('A 2 resets the pile.')}
   else if(cards[0].r===JOKER){
     const active=S.players.filter(x=>!x.out).length;
@@ -474,9 +521,9 @@ function afterPlay(pi,cards,zone){
   if(endCheck())return;
   // jacks that were your last cards (nothing left in that hand or row) need no follow-up: the next player plays on the jack
   const lastCards=p.out||(zone&&!p[zone].length);
-  if(!burn&&S.jacks&&cards[0].r===11&&lastCards){S.follow='next';log(`Those were ${p.name==='You'?'your':p.name+"'s"} last cards, so no follow-up is needed. Next player: J, Q, K, A or joker.`)}
+  if(!burn&&S.jacks&&cards[0].r===11&&lastCards){S.follow='next';fx('jack',{pi,last:true});log(`Those were ${p.name==='You'?'your':p.name+"'s"} last cards, so no follow-up is needed. Next player: J, Q, K, A or joker.`)}
   if(!burn&&S.jacks&&cards[0].r===11&&!lastCards){
-    S.follow=pi;
+    S.follow=pi;fx('jack',{pi});
     log(`${p.name} ${youVerb(p,'must','must')} follow the jack with a J, Q, K, A or joker.`);
     beginTurn();return;
   }
@@ -504,7 +551,7 @@ function endCheck(){
 function pickUp(pi){
   S.follow=null;
   const p=S.players[pi];const n=S.pile.length;
-  fx('pickup',{pi,n});p.hand.push(...S.pile);S.pile=[];sortHand(p);
+  fx('pickup',{pi,n});remember2(pi,S.pile);p.hand.push(...S.pile);S.pile=[];sortHand(p);
   log(`${p.name} ${youVerb(p,'pick','picks')} up the pile (${n} card${n===1?'':'s'}).`);
   advance();
 }
@@ -515,7 +562,7 @@ function flip(pi,idx){
   if(canPlay(c.r)){
     S.pile.push(c);fx('play',{pi,n:1});log(`${p.name} flipped ${cardName(c)} blind and it plays.`);afterPlay(pi,[c],'down');
   }else{
-    S.pile.push(c);const n=S.pile.length;fx('pickup',{pi,n});
+    S.pile.push(c);const n=S.pile.length;fx('pickup',{pi,n});remember2(pi,S.pile);
     p.hand.push(...S.pile);S.pile=[];sortHand(p);
     log(`${p.name} flipped ${cardName(c)} blind. It can't go, so ${youVerb(p,'you pick','they pick')} up ${n} cards.`);
     advance();
@@ -529,6 +576,41 @@ function aiMove(){
   if(p.type!=='cpu')return;
   const m=aiChoice(pi,S.level||'normal');
   if(m.kind==='flip')flip(pi,m.idx);else if(m.kind==='pickup')pickUp(pi);else doPlay(pi,m.zone,m.idx);
+}
+// card counting for the hard computer
+function remember2(pi,cards){S.known=S.known||{};S.known[pi]=(S.known[pi]||[]).concat(cards.map(c=>c.id))}
+function forget(pi,cards){if(S.known&&S.known[pi]){const ids=new Set(cards.map(c=>c.id));S.known[pi]=S.known[pi].filter(x=>!ids.has(x))}}
+function nextIdx(from){const n=S.players.length,d=S.dir||1;let t=from;do{t=(t+d+n)%n}while(S.players[t].out&&t!==from);return t}
+function beats(cr,r){if(S.jacks&&r===11)return cr>=11;if(cr===2||cr===10||invisible(cr))return true;if(S.seven&&r===7)return cr<=7;return cr>=r}
+function unseenFor(pi){
+  // every card this player can't see: not in its own hand or table, not face-up anywhere, not on the pile, not burned, not known in someone's hand
+  const seen=new Set();const me=S.players[pi];
+  [...me.hand,...me.up].forEach(c=>seen.add(c.id));
+  S.players.forEach(p=>p.up.forEach(c=>seen.add(c.id)));
+  S.pile.forEach(c=>seen.add(c.id));(S.gone||[]).forEach(id=>seen.add(id));
+  Object.values(S.known||{}).forEach(a=>a.forEach(id=>seen.add(id)));
+  const all=[];for(const su of SUITS)for(let r=2;r<=14;r++)all.push(r);if(S.jokers){all.push(JOKER,JOKER)}
+  // ids follow the deck build order, so rebuild rank by id
+  const ranks=[];let id=0;for(const su of SUITS)for(let r=2;r<=14;r++){if(!seen.has(id))ranks.push(r);id++}
+  if(S.jokers){if(!seen.has(id))ranks.push(JOKER);if(!seen.has(id+1))ranks.push(JOKER)}
+  return ranks;
+}
+function hardPick(pi,normal){
+  const np=nextIdx(pi),q=S.players[np];
+  const knownIds=new Set((S.known||{})[np]||[]);
+  const knownCards=q.hand.filter(c=>knownIds.has(c.id));
+  const unknownN=q.hand.length-knownCards.length+(q.hand.length?0:q.up.length?0:q.down.length);
+  const pool=unseenFor(pi);
+  let best=normal[0],bestScore=1e9;
+  normal.forEach((r,k)=>{
+    let pBeat;
+    if(!q.hand.length&&q.up.length)pBeat=q.up.some(c=>beats(c.r,r))?1:0;
+    else if(knownCards.some(c=>beats(c.r,r)))pBeat=1;
+    else{const f=pool.length?pool.filter(x=>beats(x,r)).length/pool.length:1;pBeat=1-Math.pow(1-f,Math.max(1,unknownN))}
+    const score=pBeat*(2+S.pile.length*.6)+k*1.4; // forcing a pick-up is worth more the bigger the pile
+    if(score<bestScore){bestScore=score;best=r}
+  });
+  return best;
 }
 function nextNearlyOut(){
   const n=S.players.length,d=S.dir||1;let t=S.turn;
@@ -552,14 +634,16 @@ function aiChoice(pi,level,calm){
   let r;
   // a little randomness stops two computer players repeating the same pattern for ever
   const late=(S.moves||0)>150; // long games get more random so computer players can't loop for ever
-  const chaos=calm?0:late?0.6:level==='nasty'?0.04:level==='easy'?0.35:0.15;
+  const chaos=calm?0:late?0.6:level==='hard'?0.04:level==='easy'?0.35:0.15;
   if(level==='easy'&&!calm&&!late&&Math.random()<0.45)r=ranks[Math.floor(Math.random()*ranks.length)];
   else if(normal.length>1&&Math.random()<chaos)r=normal[1+Math.floor(Math.random()*(normal.length-1))];
-  // nasty: when the next player is nearly out, hit them with a 7 or the highest card it can
-  else if(level==='nasty'&&!late&&normal.length>1&&nextNearlyOut())r=S.seven&&normal.includes(7)?7:normal[normal.length-1];
+  // hard counts cards: picks the rank the next player is least likely to beat, without throwing away high cards for nothing
+  else if(level==='hard'&&!late&&normal.length>1&&!S.deck.length)r=hardPick(pi,normal);
+  // hard never spends a 2, 8, 10 or joker while an ordinary card will do
+  else if(level==='hard'&&normal.length)r=normal[0];
   else if(normal.length&&!(S.pile.length>=6&&ranks.includes(10)&&normal[0]>=11))r=normal[0];
   else if(ranks.includes(10)&&(S.pile.length>=4||ranks.length===1))r=10;
-  else r=[2,8,JOKER,10].find(x=>ranks.includes(x));
+  else r=(level==='hard'&&(topRank()||0)>=10?[8,JOKER,2,10]:[2,8,JOKER,10]).find(x=>ranks.includes(x));
   const idx=cards.map((c,i)=>c.r===r?i:-1).filter(i=>i>=0);
   if(level==='easy'&&!calm&&idx.length>1&&Math.random()<0.4)idx.length=1;
   return{kind:'play',zone:z,idx};
@@ -610,6 +694,7 @@ function act(a,el){
   if(a==='seat-type'){const k=+el.dataset.k;const s=setup.seats[k];s.type=s.type==='cpu'?'human':'cpu';if(s.type==='cpu'&&(!s.name||/^Player \d$/.test(s.name)))s.name=CPU_NAMES[k-1];if(s.type==='human'&&CPU_NAMES.includes(s.name))s.name=`Player ${k+1}`;saveSetup();render();return}
   if(a==='mode'&&el.dataset.m==='online'){setup.online=true;saveSetup();render();return}
   if(a==='mode'){setup.online=false;const h=el.dataset.m==='people';for(let k=1;k<4;k++){const st=setup.seats[k];st.type=h?'human':'cpu';st.name=h?`Player ${k+1}`:CPU_NAMES[k-1]}if(h&&setup.seats[0].name==='You')setup.seats[0].name='Player 1';if(!h&&setup.seats[0].name==='Player 1')setup.seats[0].name='You';saveSetup();render();return}
+  if(a==='preset'){const pr=PRESETS.find(x=>x[0]===el.dataset.p);if(pr){Object.assign(setup,pr[1]);saveSetup();if(ON&&ON.host)render();else render()}return}
   if(a==='level'){setup.level=el.dataset.l;saveSetup();render();return}
   if(a==='shame-reset'){saveShame({});render();return}
   if(a==='hint'){showHint();return}
@@ -778,9 +863,12 @@ function renderSetup(){
   </div>`;
 }
 
+const PRESETS=[['smudgy house',{seven:true,eights:true,jacks:true,jokers:true}],['classic',{seven:true,eights:false,jacks:false,jokers:false}],['no frills',{seven:false,eights:false,jacks:false,jokers:false}]];
 function togglesHTML(){
   const lv=setup.level||'normal';
-  return `<div class="label ctr">Computer level</div><div class="seg ctr" role="group" aria-label="Computer level">${['easy','normal','nasty'].map(k=>`<button data-act="level" data-l="${k}" aria-pressed="${k===lv}">${k}</button>`).join('')}</div>
+  const pre=PRESETS.map(([n,r])=>`<button data-act="preset" data-p="${n}" aria-pressed="${Object.keys(r).every(k=>!!setup[k]===r[k])}">${n}</button>`).join('');
+  return `<div class="label ctr">House rules</div><div class="seg ctr" role="group" aria-label="House rules presets">${pre}</div>
+      <div class="label ctr">Computer level</div><div class="seg ctr" role="group" aria-label="Computer level">${['easy','normal','hard'].map(k=>`<button data-act="level" data-l="${k}" aria-pressed="${k===lv}">${k}</button>`).join('')}</div>
       <label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means 7 or lower<small>After a 7, the next player must play a 7 or lower. The magic cards (2, 8, 10 and jokers) still go on it.</small></span></label>
       <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
       <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile, unless the jacks were their last cards. 2s, 8s and 10s never go on a jack.</small></span></label>
@@ -892,7 +980,12 @@ function renderGame(){
   if(S.phase==='over'){
     const ranks=S.finish.map((pi,k)=>`<li><b>${ordinal(k+1)}</b>${k===0?'👑 ':''}${esc(S.players[pi].name)}</li>`).join('');
     const sh=S.shithead!=null?S.players[S.shithead]:null;
-    html+=`<div class="cover"><div class="cover-box"><span class="label">Game over</span><h2>${sh?`${esc(sh.name)} ${sh.name==='You'?'are':'is'} the shithead`:'Game over'}</h2>
+    const youLost=sh&&S.players[S.shithead].type==='human'&&(S.shithead===S.viewer||!ON&&!multiHuman());
+    const youWon=S.finish[0]===S.viewer&&S.players[S.viewer]&&S.players[S.viewer].type==='human';
+    const st=sh?(loadShame()[sh.name]||{shit:0,played:0}):null;
+    const roast=sh?ROASTS[(S.round*7+S.moves)%ROASTS.length]:'';
+    html+=`<div class="cover"><div class="cover-box ${youLost?'lost':''}">${sh?`<div class="loser-art${youWon?' win':''}" aria-hidden="true">${youWon?'🏆':'💩'}</div>`:''}<span class="label">Game over</span><h2>${sh?`${esc(sh.name)} ${sh.name==='You'?'are':'is'} the shithead`:'Game over'}</h2>
+      ${sh?`<p class="roast">${youWon?'You won! ':''}${esc(roast.replace('{n}',sh.name))}</p><p class="note">${esc(sh.name)} ${sh.name==='You'?'have':'has'} been the shithead ${st.shit} time${st.shit===1?'':'s'} in ${st.played} game${st.played===1?'':'s'} on this device.</p>`:''}
       <ol class="ranks">${ranks}${sh?`<li class="loser"><b>Last</b>💩 ${esc(sh.name)}</li>`:''}</ol>
       <div class="actions">${ON?(ON.host?'<button class="btn" data-act="again-online">Deal again</button>':'<span class="prompt">Waiting for the host to deal again.</span>')+'<button class="btn ghost" data-act="leave">Leave game</button>':'<button class="btn" data-act="again">Play again</button><button class="btn ghost" data-act="menu">Change players</button>'}</div></div></div>`;
   }
@@ -922,7 +1015,7 @@ function render(){
 // game events are stored in S.evs so every phone in an online game plays them too
 function fx(type,o){if(!S)return;S.evs=S.evs||[];S.evSeq=(S.evSeq||0)+1;S.evs.push(Object.assign({seq:S.evSeq,type},o||{}));if(S.evs.length>10)S.evs.shift()}
 let seenEv=0,lastTurnMine=false;
-const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduceMotion=()=>appSet.anim==='off'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let AC=null;
 function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==='suspended')AC.resume().catch(()=>{});return AC}
@@ -968,6 +1061,12 @@ function bubble(pi,text,cls){
 const aliveCpus=except=>S.players.map((p,i)=>p.type==='cpu'&&!p.out&&i!==except?i:-1).filter(i=>i>=0);
 const anyOf=a=>a[Math.floor(Math.random()*a.length)];
 
+function banner(text,kind){
+  document.querySelectorAll('.banner').forEach(b=>b.remove());
+  const b=document.createElement('div');b.className='banner '+(kind||'')+(reduceMotion()?' still':'');b.textContent=text;document.body.appendChild(b);
+  setTimeout(()=>b.remove(),1300);
+}
+function landCard(){if(reduceMotion())return;const c=document.querySelector('.pile .card:last-child');if(c)c.classList.add('land')}
 function flames(){
   const w=document.querySelector('.pile');if(!w||reduceMotion())return;
   const r=w.getBoundingClientRect();
@@ -1012,6 +1111,7 @@ function shameHTML(){
     </tbody></table><div class="actions center"><button class="btn ghost sm" data-act="shame-reset">Clear the hall of shame</button></div></details>`;
 }
 
+const ROASTS=['Poo hat for {n} until the next game.','Shuffle duty goes to {n}. And tea duty.','Somebody take a photo of {n}.','{n}: professional pile collector.','History will remember {n}. Not kindly.','Were the cards upside down, {n}?','Better luck next time, {n}. You\'ll need it.'];
 function processFx(){
   if(!S)return;
   const mine=S.phase==='play'&&S.turn===S.viewer&&S.players[S.viewer]&&S.players[S.viewer].type==='human'&&!pass;
@@ -1021,11 +1121,12 @@ function processFx(){
   const evs=(S.evs||[]).filter(e=>e.seq>seenEv);
   seenEv=S.evSeq||0;
   for(const e of evs){
-    if(e.type==='play')sfx('snap',e.n);
-    else if(e.type==='burn'){sfx('whoosh');flames();buzz([30,40,30]);if(S.players[e.pi].type==='cpu')taunt(e.pi,'burn',.7)}
+    if(e.type==='play'){sfx('snap',e.n);landCard();if(e.r===8&&S.eights||e.r===JOKER)banner(e.r===JOKER?'See-through joker':'See-through 8','see')}
+    else if(e.type==='jack')banner(e.last?'Cacky jack! Last cards':'Cacky jack! Follow it','jack');
+    else if(e.type==='burn'){sfx('whoosh');flames();banner('Burn! 🔥','burn');buzz([30,40,30]);if(S.players[e.pi].type==='cpu')taunt(e.pi,'burn',.7)}
     else if(e.type==='pickup'){sfx('thud',e.n);setTimeout(()=>flyCards(e.pi,e.n),30);
       if(S.players[e.pi].type==='cpu')taunt(e.pi,'pickup',.6);else{const c=aliveCpus(e.pi);if(c.length)setTimeout(()=>taunt(anyOf(c),'gloat',.7),300)}}
-    else if(e.type==='reverse')sfx('boing');
+    else if(e.type==='reverse'){sfx('boing');banner('Reverse! ⇄','see')}
     else if(e.type==='out'){sfx('ding');taunt(e.pi,'out',.8)}
     else if(e.type==='over'){
       recordShame();
@@ -1052,7 +1153,7 @@ function sendEmote(e){
 }
 function showHint(){
   if(!S||S.turn!==S.viewer)return;
-  const m=aiChoice(S.viewer,'nasty',true);
+  const m=aiChoice(S.viewer,'hard',true);
   if(m.kind==='play'){sel={zone:m.zone,idx:m.idx};hintMsg='Hint: this is the play mAIm would make.'}
   else if(m.kind==='flip')hintMsg='Hint: flip a face-down card that has nothing on top of it.';
   else hintMsg='Hint: nothing goes. Pick up the pile.';
@@ -1294,7 +1395,7 @@ const GLOWS=[["#e53935","red"],["#f08a24","orange"],["#f2d21b","yellow"],["#3cc8
 const SPEEDS={slow:1500,normal:900,fast:450};
 const SET_KEY="shithead-settings-v1";
 const BACKS=[["stripes","stripes"],["smudge","smudgenet"],["red","classic red"],["blue","classic blue"],["midnight","midnight"],["tartan","tartan"],["poo","poo"]];
-const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal",back:"stripes",sound:"on",buzz:"on",debug:"off",undo:"on"};
+const DEFAULT_SETTINGS={theme:"classic",font:"Space Grotesk",scale:100,glow:"rainbow",speed:"normal",back:"stripes",sound:"on",buzz:"on",debug:"off",undo:"on",anim:"on"};
 let appSet={...DEFAULT_SETTINGS};
 try{Object.assign(appSet,JSON.parse(localStorage.getItem(SET_KEY)||"{}"))}catch(e){}
 const saveAppSet=()=>{try{localStorage.setItem(SET_KEY,JSON.stringify(appSet))}catch(e){}};
@@ -1307,7 +1408,7 @@ const JOKER_ANIMS=['wave','flip','spin','drop','morse','jiggle','scatter'];
 let lastJx='';
 function playJokerAnim(){
   const box=document.querySelector('.hero-cards');
-  if(!box||document.hidden)return;
+  if(!box||document.hidden||reduceMotion())return;
   let a;do{a=JOKER_ANIMS[Math.floor(Math.random()*JOKER_ANIMS.length)]}while(a===lastJx&&JOKER_ANIMS.length>1);
   lastJx=a;
   box.className='hero-cards';
@@ -1367,6 +1468,7 @@ function applyAppSettings(){
   const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=th.bg;
   DELAY=SPEEDS[appSet.speed]||900;
   document.documentElement.dataset.back=appSet.back||"stripes";
+  document.documentElement.classList.toggle("noanim",appSet.anim==="off");
   const lg=document.querySelector("#logoAnim img");if(lg&&lg.src)r.setProperty("--logo-url",`url("${lg.src}")`);
   logoAnim.set(appSet.glow);
 }
@@ -1378,7 +1480,7 @@ function renderAppSettings(){
     <div class="sgroup"><b>font</b><div class="fonts">${FONTS.map(([l,f])=>`<button type="button" class="fontbtn${f===appSet.font?" on":""}" data-font="${f}" style="font-family:'${f}'">${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>text size</b><div class="srange"><span>a</span><input type="range" id="textScale" min="85" max="125" step="5" value="${appSet.scale}" aria-label="text size"><span style="font-size:1.3em">a</span><span>${appSet.scale}%</span></div></div>
     <div class="sgroup"><b>logo glow</b><div class="glows"><button type="button" class="glowtxt${appSet.glow==="rainbow"?" on":""}" data-glow="rainbow">rainbow</button>${GLOWS.map(([c,n],i)=>`<button type="button" class="glowbtn${String(appSet.glow)===String(i)?" on":""}" data-glow="${i}" style="background:${c}" aria-label="${n} glow"></button>`).join("")}<button type="button" class="glowtxt${appSet.glow==="off"?" on":""}" data-glow="off">off</button></div></div>
-    <div class="sgroup"><b>sound and buzz</b><div class="glows">${["on","off"].map(k=>`<button type="button" class="pill${(appSet.sound||"on")===k?" on":""}" data-sound="${k}">sound ${k}</button>`).join("")}${["on","off"].map(k=>`<button type="button" class="pill${(appSet.buzz||"on")===k?" on":""}" data-buzz="${k}">buzz ${k}</button>`).join("")}</div></div>
+    <div class="sgroup"><b>sound, buzz and animations</b><div class="glows">${["on","off"].map(k=>`<button type="button" class="pill${(appSet.anim||"on")===k?" on":""}" data-anim="${k}">animations ${k}</button>`).join("")}${["on","off"].map(k=>`<button type="button" class="pill${(appSet.sound||"on")===k?" on":""}" data-sound="${k}">sound ${k}</button>`).join("")}${["on","off"].map(k=>`<button type="button" class="pill${(appSet.buzz||"on")===k?" on":""}" data-buzz="${k}">buzz ${k}</button>`).join("")}</div></div>
     <div class="sgroup"><b>card backs</b><div class="backs">${BACKS.map(([id,l])=>`<button type="button" class="backbtn${(appSet.back||"stripes")===id?" on":""}" data-back="${id}" aria-label="${l} card back"><div class="card back" aria-hidden="true"></div>${l}</button>`).join("")}</div></div>
     <div class="sgroup"><b>computer players</b><div class="glows">${Object.keys(SPEEDS).map(k=>`<button type="button" class="pill${appSet.speed===k?" on":""}" data-speed="${k}">${k}</button>`).join("")}</div></div>
     <div class="sgroup"><b>step back button</b><div class="glows">${["on","off"].map(k=>`<button type="button" class="pill${(appSet.undo||"on")===k?" on":""}" data-undo="${k}">${k}</button>`).join("")}</div></div>
@@ -1397,6 +1499,7 @@ document.getElementById("settingsSheet").addEventListener("click",e=>{
   else if(b.dataset.back)setApp("back",b.dataset.back);
   else if(b.dataset.debug){setApp("debug",b.dataset.debug);render()}
   else if(b.dataset.undo){setApp("undo",b.dataset.undo);render()}
+  else if(b.dataset.anim){setApp("anim",b.dataset.anim);document.documentElement.classList.toggle("noanim",b.dataset.anim==="off")}
   else if(b.dataset.sound){setApp("sound",b.dataset.sound);if(b.dataset.sound==="on")sfx("ding")}
   else if(b.dataset.buzz){setApp("buzz",b.dataset.buzz);if(b.dataset.buzz==="on")buzz(80)}
   else if(b.dataset.act==="settings-close")document.getElementById("settingsSheet").hidden=true;
