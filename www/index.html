@@ -388,6 +388,10 @@ details.rules ul{padding-left:1.2em;margin:8px auto 0;max-width:65ch}
 <div id="app"></div>
 <div id="settingsSheet" class="sheet" hidden></div>
 
+<script src="vendor/firebase-app-compat.js"></script>
+<script src="vendor/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script>
 const SUITS=['♠','♥','♦','♣'];
 const NAMES={11:'J',12:'Q',13:'K',14:'A',15:'★'};
@@ -1219,6 +1223,14 @@ function say(m){onlineMsg=m;render()}
 
 async function initOnline(){
   try{
+    // in the phone app, online play runs on Firebase (anonymous sign-in + Firestore, same API shape as the claude.ai store)
+    if((!window.claude||!window.claude.use)&&window.FIREBASE_CONFIG&&window.firebase){
+      if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);
+      const cred=await firebase.auth().signInAnonymously();
+      onlineApi={db:firebase.firestore(),uid:cred.user.uid,canWrite:true,kind:'firebase'};
+      if(savedCode()&&!S&&!ON)enterGame(savedCode());else if(!S)render();
+      return;
+    }
     if(!window.claude||!window.claude.use){onlineApi=false;render();return}
     const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
     const uid=user?await user.id():null;
@@ -1231,7 +1243,7 @@ async function initOnline(){
 
 function onlinePanelHTML(){
   if(onlineApi===null)return '<p class="note">Connecting…</p>';
-  if(onlineApi===false)return '<p class="note">Online play works when this game is opened from its claude.ai link while signed in. It isn\'t available in a downloaded or installed copy.</p>';
+  if(onlineApi===false)return window.FIREBASE_CONFIG?'<p class="note">Couldn\'t reach the online service. Check your internet connection and try again.</p>':window.claude?'<p class="note">Online play works when this game is opened from its claude.ai link while signed in.</p>':'<p class="note">Online play in the app is coming soon.</p>';
   if(onlineApi.canWrite===false)return '<p class="note">You can look at this game but not play online. Ask the person who shared it to invite you as an Editor.</p>';
   const code=savedCode();
   return `<div class="label">Your name</div>
@@ -1240,7 +1252,7 @@ function onlinePanelHTML(){
     <div class="label">Or join a friend's game</div>
     <div class="joinrow"><input class="text" id="ocode" maxlength="4" placeholder="code" autocomplete="off" autocapitalize="characters" aria-label="Game code"><button class="btn ghost" data-act="join">Join</button>${code?`<button class="btn ghost" data-act="rejoin">Rejoin ${esc(code)}</button>`:''}</div>
     ${onlineMsg?`<p class="note warn">${esc(onlineMsg)}</p>`:''}
-    <p class="note">Each friend opens this same game link on their own phone, picks Online and types your code. They need a Claude account, and you need to share the game with them as an Editor from the Share menu.</p>`;
+    <p class="note">${onlineApi.kind==='firebase'?'Friends open the shithead app on their own phones, pick online and type your code.':'Each friend opens this same game link on their own phone, picks Online and types your code. They need a Claude account, and you need to share the game with them as an Editor from the Share menu.'}</p>`;
 }
 
 function nameOrAsk(){
