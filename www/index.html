@@ -326,8 +326,9 @@ let pass=null;              // {pi, why} hand-over cover for pass-and-play
 let timer=null;
 let nudgeId=null;
 let seenBurn=0;
-let setup=loadSetup()||{count:3,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
+let setup=loadSetup()||{v:2,count:2,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
+if(!setup.v){setup.v=2;setup.count=2} // the default became 2 players; switch saved setups over once, then keep the player's choice
 
 function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(st.type==='cpu'&&(OLD_CPU.includes(st.name)||CPU_NAMES.includes(st.name)))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
 function saveSetup(){try{localStorage.setItem('shithead-setup',JSON.stringify(setup))}catch(e){}}
