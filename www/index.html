@@ -119,6 +119,10 @@ body.home .title .tbox b{font-size:1.3rem}
 [data-back="tartan"]{--back-bg:repeating-linear-gradient(0deg,rgba(200,30,40,.6) 0 3px,transparent 3px 11px),repeating-linear-gradient(90deg,rgba(200,30,40,.6) 0 3px,transparent 3px 11px),repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 5px),#1f5d3a;--back-mark:""}
 [data-back="poo"]{--back-bg:radial-gradient(circle at 50% 50%,#8a5a2b,#4a2e14 80%);--back-mark:"💩"}
 .backs{display:flex;flex-wrap:wrap;gap:10px}
+.seg button.soon{opacity:.45;cursor:not-allowed}
+.seg button.soon small{font-size:.7em;font-weight:600}
+.ctrnote{text-align:center;margin:0;font-size:13px;color:var(--muted)}
+.toggle input:disabled+span{opacity:.6}
 .pile .card.under{box-shadow:0 0 0 3px var(--accent),0 5px 14px rgba(0,0,0,.3)}
 .undertag{color:var(--accent)!important;font-weight:700}
 .sdesc{margin:6px 0 0;text-align:center;font-size:.78rem;color:var(--muted)}
@@ -375,6 +379,7 @@ let seenBurn=0;
 let setup=loadSetup()||{v:2,count:2,seats:[{name:'You',type:'human'},{name:'mAIm',type:'cpu'},{name:'bobAI',type:'cpu'},{name:'dobAI',type:'cpu'}],seven:true,eights:true,jacks:true,jokers:true};
 for(const k of ['eights','jacks','jokers'])if(setup[k]===undefined)setup[k]=true;
 if(setup.level==='nasty')setup.level='hard';
+if(!setup.ruleset)setup.ruleset='custom';
 if(!setup.v){setup.v=2;setup.count=2} // the default became 2 players; switch saved setups over once, then keep the player's choice
 
 function loadSetup(){try{const x=JSON.parse(localStorage.getItem('shithead-setup'));if(!(x&&x.seats&&x.seats.length===4))return null;x.seats.forEach((st,k)=>{if(st.type==='cpu'&&(OLD_CPU.includes(st.name)||CPU_NAMES.includes(st.name)))st.name=CPU_NAMES[k-1]||st.name});return x}catch(e){return null}}
@@ -694,7 +699,7 @@ function act(a,el){
   if(a==='seat-type'){const k=+el.dataset.k;const s=setup.seats[k];s.type=s.type==='cpu'?'human':'cpu';if(s.type==='cpu'&&(!s.name||/^Player \d$/.test(s.name)))s.name=CPU_NAMES[k-1];if(s.type==='human'&&CPU_NAMES.includes(s.name))s.name=`Player ${k+1}`;saveSetup();render();return}
   if(a==='mode'&&el.dataset.m==='online'){setup.online=true;saveSetup();render();return}
   if(a==='mode'){setup.online=false;const h=el.dataset.m==='people';for(let k=1;k<4;k++){const st=setup.seats[k];st.type=h?'human':'cpu';st.name=h?`Player ${k+1}`:CPU_NAMES[k-1]}if(h&&setup.seats[0].name==='You')setup.seats[0].name='Player 1';if(!h&&setup.seats[0].name==='Player 1')setup.seats[0].name='You';saveSetup();render();return}
-  if(a==='preset'){const pr=PRESETS.find(x=>x[0]===el.dataset.p);if(pr){Object.assign(setup,pr[1]);saveSetup();if(ON&&ON.host)render();else render()}return}
+  if(a==='ruleset'){setRuleset(el.dataset.r);render();return}
   if(a==='level'){setup.level=el.dataset.l;saveSetup();render();return}
   if(a==='shame-reset'){saveShame({});render();return}
   if(a==='hint'){showHint();return}
@@ -863,16 +868,26 @@ function renderSetup(){
   </div>`;
 }
 
-const PRESETS=[['smudgy house',{seven:true,eights:true,jacks:true,jokers:true}],['classic',{seven:true,eights:false,jacks:false,jokers:false}],['no frills',{seven:false,eights:false,jacks:false,jokers:false}]];
+// rule sets: classic is fixed, ultra is coming later, custom is the player's own switches (kept in setup.custom)
+const RULE_KEYS=['seven','eights','jacks','jokers'];
+const CLASSIC={seven:true,eights:false,jacks:false,jokers:false};
+function setRuleset(rs){
+  if(rs==='ultra')return;
+  if(rs==='classic'&&setup.ruleset!=='classic'){setup.custom=Object.fromEntries(RULE_KEYS.map(k=>[k,!!setup[k]]));Object.assign(setup,CLASSIC)}
+  if(rs==='custom'&&setup.ruleset==='classic'){Object.assign(setup,setup.custom||{seven:true,eights:true,jacks:true,jokers:true})}
+  setup.ruleset=rs;saveSetup();
+}
 function togglesHTML(){
   const lv=setup.level||'normal';
-  const pre=PRESETS.map(([n,r])=>`<button data-act="preset" data-p="${n}" aria-pressed="${Object.keys(r).every(k=>!!setup[k]===r[k])}">${n}</button>`).join('');
-  return `<div class="label ctr">House rules</div><div class="seg ctr" role="group" aria-label="House rules presets">${pre}</div>
+  const rs=setup.ruleset||'custom',locked=rs==='classic'?'disabled':'';
+  const pre=`<button data-act="ruleset" data-r="classic" aria-pressed="${rs==='classic'}">Classic</button><button data-act="ruleset" data-r="ultra" disabled title="Coming soon" class="soon">Ultra <small>soon</small></button><button data-act="ruleset" data-r="custom" aria-pressed="${rs==='custom'}">Custom</button>`;
+  return `<div class="label ctr">Rules</div><div class="seg ctr" role="group" aria-label="Rule set">${pre}</div>
+      <p class="note ctrnote">${rs==='classic'?'Classic Shithead: 2 resets, 10 burns, 7 means 7 or lower. Pick Custom to change the rules.':'Your own rules. Switch them on or off below.'}</p>
       <div class="label ctr">Computer level</div><div class="seg ctr" role="group" aria-label="Computer level">${['easy','normal','hard'].map(k=>`<button data-act="level" data-l="${k}" aria-pressed="${k===lv}">${k}</button>`).join('')}</div>
-      <label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''}><span>7 means 7 or lower<small>After a 7, the next player must play a 7 or lower. The magic cards (2, 8, 10 and jokers) still go on it.</small></span></label>
-      <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
-      <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile, unless the jacks were their last cards. 2s, 8s and 10s never go on a jack.</small></span></label>
-      <label class="toggle"><input type="checkbox" id="jokers" data-act="jokers" ${setup.jokers?'checked':''}><span>Jokers<small>Two jokers in the deck. A joker is invisible, plays on anything, and with 3 or more players it reverses the direction of play.</small></span></label>`;
+      <label class="toggle"><input type="checkbox" id="seven" data-act="seven" ${setup.seven?'checked':''} ${locked}><span>7 means 7 or lower<small>After a 7, the next player must play a 7 or lower. The magic cards (2, 8, 10 and jokers) still go on it.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="eights" data-act="eights" ${setup.eights?'checked':''} ${locked}><span>8s are invisible<small>An 8 plays on anything, and the next player plays on the card beneath it.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="jacks" data-act="jacks" ${setup.jacks?'checked':''} ${locked}><span>Cacky jack<small>Whoever lays a jack (or several) must straight away lay a J, Q, K, A or joker on top, one or more of a rank. If they can't, they pick up the pile, unless the jacks were their last cards. 2s, 8s and 10s never go on a jack.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="jokers" data-act="jokers" ${setup.jokers?'checked':''} ${locked}><span>Jokers<small>Two jokers in the deck. A joker is invisible, plays on anything, and with 3 or more players it reverses the direction of play.</small></span></label>`;
 }
 function rulesHTML(){
   return `<details class="rules"><summary>How to play</summary><ul>
